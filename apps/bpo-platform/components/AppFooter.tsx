@@ -2,7 +2,9 @@ import Link from "next/link";
 import type { User } from "../lib/types";
 
 const publicLinks = [
-  { href: "/", label: "Overview" },
+  { href: "/#mission", label: "Mission" },
+  { href: "/#who-we-serve", label: "Who we serve" },
+  { href: "/#platform", label: "Platform" },
   { href: "/login", label: "Sign in" }
 ];
 

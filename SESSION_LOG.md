@@ -70,3 +70,27 @@ At the beginning of each new session, read this file before making changes. At t
 ### Next Notes
 - As public marketing pages are added, keep their navigation items in the shared header/footer components or shared nav config.
 - Consider adding active-link styling once more top-level sections exist.
+
+## 2026-05-16 - Mission Homepage
+
+### Changes
+- Replaced the placeholder MVP homepage with a public mission-centered homepage.
+- Added a full-bleed hero section with a real estate visual, mission copy, and calls to explore the mission or open the member workspace.
+- Added homepage sections for the project mission, audiences served, and platform purpose.
+- Updated public header and footer navigation to link to homepage sections.
+- Configured Next.js to allow the Unsplash hero image source.
+
+### Reasons
+- The website needs to connect readers to the mission of the project before asking them to use the web app.
+- The public homepage should explain the value BPO agents provide in due diligence, valuation support, and professional decision-making.
+- The homepage should still provide a clear path into the authenticated report workspace for members.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`.
+- Opened the homepage in the browser and visually checked the hero, mission content, navigation, and workspace CTA.
+
+### Next Notes
+- Add dedicated public pages for buyers, sellers, professionals, and agents when the homepage needs deeper education paths.
+- Consider adding contact/lead capture once the public content structure is ready.
