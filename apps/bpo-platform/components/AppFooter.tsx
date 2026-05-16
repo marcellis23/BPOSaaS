@@ -3,7 +3,9 @@ import type { User } from "../lib/types";
 
 const publicLinks = [
   { href: "/#mission", label: "Mission" },
-  { href: "/#who-we-serve", label: "Who we serve" },
+  { href: "/seller-services", label: "Seller services" },
+  { href: "/buyer-services", label: "Buyer services" },
+  { href: "/valuation-support-services", label: "Valuation support" },
   { href: "/#platform", label: "Platform" },
   { href: "/login", label: "Sign in" }
 ];

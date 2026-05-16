@@ -5,7 +5,9 @@ import { SubmitButton } from "./SubmitButton";
 
 const publicNavLinks = [
   { href: "/#mission", label: "Mission" },
-  { href: "/#who-we-serve", label: "Who we serve" },
+  { href: "/seller-services", label: "Sellers" },
+  { href: "/buyer-services", label: "Buyers" },
+  { href: "/valuation-support-services", label: "Professionals" },
   { href: "/#platform", label: "Platform" }
 ];
 

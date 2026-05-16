@@ -20,6 +20,24 @@ const audienceGroups = [
   }
 ];
 
+const servicePaths = [
+  {
+    title: "Seller Services",
+    href: "/seller-services",
+    text: "Evaluate as-is value, repair options, mortgage default risk, inherited property decisions, and private transaction fairness."
+  },
+  {
+    title: "Buyer Services",
+    href: "/buyer-services",
+    text: "Bring due diligence forward for value-focused purchases, investors, long-term holds, and lot development opportunities."
+  },
+  {
+    title: "Valuation Support Services",
+    href: "/valuation-support-services",
+    text: "Support AMCs, appraisers, agents, attorneys, advisors, lenders, and other professionals with market-grounded documentation."
+  }
+];
+
 const platformPillars = [
   "Structured web forms for BPO, PCR, MAR, CMA, reconciliation, photos, disclosures, and report assembly.",
   "Shared property data that follows the report so agents stop retyping the same facts across every section.",
@@ -99,6 +117,26 @@ export default async function HomePage() {
                 <h3 className="text-lg font-bold text-slate-950">{group.title}</h3>
                 <p className="mt-3 text-sm leading-6 text-slate-600">{group.text}</p>
               </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Information pages</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              Learn how BPO support applies to different real estate decisions.
+            </h2>
+          </div>
+          <div className="mt-8 grid gap-5 md:grid-cols-3">
+            {servicePaths.map((service) => (
+              <Link key={service.href} href={service.href} className="card block p-6 transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+                <h3 className="text-lg font-bold text-slate-950">{service.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{service.text}</p>
+                <span className="mt-5 inline-block text-sm font-semibold text-blue-700">Read more</span>
+              </Link>
             ))}
           </div>
         </div>

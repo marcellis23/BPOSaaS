@@ -94,3 +94,28 @@ At the beginning of each new session, read this file before making changes. At t
 ### Next Notes
 - Add dedicated public pages for buyers, sellers, professionals, and agents when the homepage needs deeper education paths.
 - Consider adding contact/lead capture once the public content structure is ready.
+
+## 2026-05-16 - Static Service Information Pages
+
+### Changes
+- Added reusable public information page content and rendering components for static service pages.
+- Added main public pages for Seller Services, Buyer Services, and Valuation Support Services.
+- Added Seller Services subpages for Distressed Property Sellers, Mortgage Default, Inherited Property, and Private Transactions.
+- Added Buyer Services subpages for Value-Focused Buyers, Short-Term Investors, Long-Term Investors, and Lot Development.
+- Added Valuation Support Services subpages for Bank/AMC Valuation Support, Appraiser Support Services, Agent Support Services, and Professional Support Services.
+- Updated homepage, header, and footer navigation so readers can discover the new service pages from the public site.
+
+### Reasons
+- The imported WordPress pages contained the right service structure and messaging, but needed to be rebuilt in the new app layout instead of carrying forward embedded WordPress HTML/CSS.
+- Static information pages help public readers understand how BPO support applies to sellers, buyers, and professionals before they enter the member workflow.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`; build generated 23 routes including all new static pages.
+- Opened representative static pages in the browser and confirmed the shared layout/styling loaded correctly after restarting the dev server.
+
+### Next Notes
+- Add active navigation styling and/or dropdown navigation once the public information architecture gets larger.
+- Consider adding contact/lead capture CTAs to these service pages.
+- Continue refining page copy against the original WordPress content as the brand voice sharpens.
