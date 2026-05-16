@@ -158,3 +158,19 @@ At the beginning of each new session, read this file before making changes. At t
 
 ### Next Notes
 - If the homepage platform section remains useful, keep it as on-page content but do not expose it as a top-level navigation item.
+
+## 2026-05-16 - Styling Check and Dev Cache Reset
+
+### Changes
+- No source styling changes were required.
+- Cleared the generated `.next` directory and restarted the local Next.js dev server.
+
+### Reasons
+- The website appeared unstyled because the running dev server had stale generated chunks after prior builds/restarts, producing missing `.next` module errors and intermittent CSS loading issues.
+
+### Verification
+- Opened the homepage in the browser and confirmed Tailwind/global styles were loaded.
+- Opened `/seller-services` and `/bpo-agents` and confirmed shared styling, header layout, and page content rendered correctly.
+
+### Next Notes
+- If styling appears broken during local development, stop the dev server, remove `apps/bpo-platform/.next`, and restart `npm run dev -- --port 3000`.
