@@ -333,6 +333,26 @@ export const publicPages: Record<string, InfoPage> = {
     supportText: "Valuation support packages help professionals explain real estate decisions with clearer assumptions, limitations, and market evidence.",
     ctaLabel: "Back to valuation support",
     ctaHref: "/valuation-support-services"
+  },
+  "bpo-agents": {
+    slug: "bpo-agents",
+    eyebrow: "BPO agents",
+    title: "Stop Competing on Access. Start Competing on Value.",
+    summary: "The real estate industry is changing quickly. BPO-focused agents can thrive by becoming trusted local valuation professionals instead of being seen as interchangeable transaction help.",
+    intro: [
+      "Technology, portals, automated valuation models, iBuyers, and low-service brokerage models are changing how consumers perceive real estate work. Tasks like opening doors, setting up searches, or filling out standard paperwork are easier to commoditize.",
+      "Agents who want to thrive need a stronger professional identity. BPO skills help agents lead with market analysis, condition awareness, comparable evidence, repair feasibility, and clear client-ready reporting."
+    ],
+    cards: [
+      { title: "The market has shifted", text: "Consumers have more tools, more data, and more options. Agents need to show judgment that software cannot fully replace." },
+      { title: "Move beyond the basic CMA", text: "A BPO approach turns pricing into a deeper analysis of condition, market behavior, repair impact, and buyer demand." },
+      { title: "Serve higher-value clients", text: "Investors, distressed sellers, inherited-property owners, professionals, and private transaction parties need more than generic sales advice." },
+      { title: "Build a valuation practice", text: "Repeatable forms, report packages, and peer learning help agents grow as valuation support professionals." }
+    ],
+    supportTitle: "Why we built this service.",
+    supportText: "This platform gives BPO-focused agents a structured workspace for report creation, consistent valuation support forms, professional presentation, and future training, collaboration, and network opportunities.",
+    ctaLabel: "Open member tools",
+    ctaHref: "/login"
   }
 };
 

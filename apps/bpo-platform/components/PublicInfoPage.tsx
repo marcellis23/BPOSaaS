@@ -49,9 +49,11 @@ export function PublicInfoPage({ page }: { page: InfoPage }) {
               <Link href={page.ctaHref} className="rounded-md bg-blue-700 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-800">
                 {page.ctaLabel}
               </Link>
-              <Link href="/login" className="rounded-md border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50">
-                Member workspace
-              </Link>
+              {page.ctaHref !== "/login" ? (
+                <Link href="/login" className="rounded-md border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50">
+                  Member workspace
+                </Link>
+              ) : null}
             </div>
           </div>
         </div>

@@ -8,6 +8,7 @@ const publicNavLinks = [
   { href: "/seller-services", label: "Sellers" },
   { href: "/buyer-services", label: "Buyers" },
   { href: "/valuation-support-services", label: "Professionals" },
+  { href: "/bpo-agents", label: "BPO Agents" },
   { href: "/#platform", label: "Platform" }
 ];
 

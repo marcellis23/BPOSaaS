@@ -119,3 +119,25 @@ At the beginning of each new session, read this file before making changes. At t
 - Add active navigation styling and/or dropdown navigation once the public information architecture gets larger.
 - Consider adding contact/lead capture CTAs to these service pages.
 - Continue refining page copy against the original WordPress content as the brand voice sharpens.
+
+## 2026-05-16 - BPO Agents Education Page
+
+### Changes
+- Added a static `/bpo-agents` page using the imported WordPress BPO Agent page as the content guide.
+- Focused the page on real estate industry change, commoditization of basic agent services, BPO mastery, and options for agents to thrive as valuation professionals.
+- Added direct calls to open the member tools.
+- Added `BPO Agents` to the public header navigation next to Professionals and to the public footer navigation.
+
+### Reasons
+- BPO-focused agents need a dedicated educational page that explains why the platform exists for them, not only for buyers, sellers, and outside professionals.
+- The page should connect the industry shift to the value of BPO skills and the member report tools.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`; build generated 24 routes including `/bpo-agents`.
+- Opened `/bpo-agents` in the browser and confirmed the page content, styling, and member-tools CTA rendered correctly.
+
+### Next Notes
+- Consider adding dedicated agent training, certification prep, community, and network pages when those offerings are ready.
+- Public navigation may need a mobile menu or dropdown as more public pages are added.
