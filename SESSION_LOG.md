@@ -50,3 +50,23 @@ At the beginning of each new session, read this file before making changes. At t
 - Replace seeded email-only auth with secure authentication.
 - Continue migrating original webform logic section by section, including calculations and richer PDF formatting.
 - Add tests for report creation, protected routes, form saving, PDF export, and role-specific admin/member access.
+
+## 2026-05-16 - Shared App Header and Footer
+
+### Changes
+- Added a standalone `AppFooter` component for consistent footer navigation across the app.
+- Updated the root Next.js layout to render a shared header, flexible page content area, and shared footer on every route.
+- Added global app frame styles so the footer stays at the bottom on short pages while content can grow naturally.
+
+### Reasons
+- The web app needs independent shared header and footer components so navigation and core layout remain consistent throughout the website/webapp.
+- Keeping header/footer in the root layout avoids duplicated navigation code inside individual pages.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`.
+
+### Next Notes
+- As public marketing pages are added, keep their navigation items in the shared header/footer components or shared nav config.
+- Consider adding active-link styling once more top-level sections exist.

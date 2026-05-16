@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AppFooter } from "../components/AppFooter";
 import { AppHeader } from "../components/AppHeader";
 import { getCurrentUser } from "../lib/auth";
 
@@ -13,8 +14,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="en">
       <body>
-        <AppHeader user={user} />
-        {children}
+        <div className="app-frame">
+          <AppHeader user={user} />
+          <div className="app-content">{children}</div>
+          <AppFooter user={user} />
+        </div>
       </body>
     </html>
   );
