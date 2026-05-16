@@ -7,7 +7,6 @@ const publicLinks = [
   { href: "/buyer-services", label: "Buyer services" },
   { href: "/valuation-support-services", label: "Valuation support" },
   { href: "/bpo-agents", label: "BPO agents" },
-  { href: "/#platform", label: "Platform" },
   { href: "/login", label: "Sign in" }
 ];
 

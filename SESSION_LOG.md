@@ -141,3 +141,20 @@ At the beginning of each new session, read this file before making changes. At t
 ### Next Notes
 - Consider adding dedicated agent training, certification prep, community, and network pages when those offerings are ready.
 - Public navigation may need a mobile menu or dropdown as more public pages are added.
+
+## 2026-05-16 - Remove Platform Navigation Item
+
+### Changes
+- Removed the `Platform` link from the public header navigation.
+- Removed the `Platform` link from the public footer navigation.
+
+### Reasons
+- The public menu was getting crowded, and the requested navigation should focus on Mission, Sellers, Buyers, Professionals, and BPO Agents.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`.
+
+### Next Notes
+- If the homepage platform section remains useful, keep it as on-page content but do not expose it as a top-level navigation item.
