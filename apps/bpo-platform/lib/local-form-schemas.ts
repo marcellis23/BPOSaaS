@@ -1,8 +1,8 @@
-import { formCatalog } from "./form-catalog";
+import { formCatalog, getBaseFormId } from "./form-catalog";
 import { localForms, localFormsById, type LocalFormDefinition } from "./forms";
 
 export function getLocalFormSchema(formId: string): LocalFormDefinition | undefined {
-  return localFormsById.get(formId);
+  return localFormsById.get(getBaseFormId(formId));
 }
 
 export function getAllLocalFormSchemas() {

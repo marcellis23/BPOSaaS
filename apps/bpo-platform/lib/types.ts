@@ -9,7 +9,7 @@ export type ReportType =
   | "Valuation Support Report"
   | "Investor Due Diligence Report";
 
-export type FieldKind = "text" | "textarea" | "select" | "number" | "date";
+export type FieldKind = "text" | "textarea" | "select" | "number" | "date" | "email" | "image";
 
 export type AssignmentIntent =
   | "seller_due_diligence"
@@ -43,6 +43,16 @@ export interface User {
   email: string;
   role: UserRole;
   organizationId: string;
+  title?: string;
+  phone?: string;
+  website?: string;
+  licenseNumber?: string;
+  brokerageName?: string;
+  brokerageAddress?: string;
+  brokerageCity?: string;
+  brokerageState?: string;
+  brokerageZip?: string;
+  brokeragePhone?: string;
 }
 
 export interface Organization {
@@ -56,7 +66,7 @@ export interface Membership {
   userId: string;
   organizationId: string;
   status: "active" | "trial" | "inactive";
-  plan: "owner" | "member";
+  plan: "owner" | "member" | "basic" | "premium";
 }
 
 export interface PropertyRecord {

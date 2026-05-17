@@ -316,3 +316,43 @@ At the beginning of each new session, read this file before making changes. At t
   10. PDF Merger
 - Compare each WordPress/imported form against its matching file in `apps/bpo-platform/lib/forms/`.
 - After each form migration, run `npm run lint`, `npm run typecheck`, and a browser check of `/reports/[id]/forms/[formId]`.
+
+## 2026-05-17 - Cover Page Migration, Profile Prefill, and Image PDF Support
+
+### Changes
+- Expanded the Cover Page local SaaS form from placeholder fields into a fuller standalone report cover page workflow.
+- Added report title options, client goal options, state options, subject property fields, client information fields, agent information fields, brokerage information fields, subject front photo upload, agent photo upload, and brokerage logo upload.
+- Added state-aware BPO/PDC disclosure generation with a federal overlay and special disclosure text for several states.
+- Added agent and brokerage profile fields to the user model and seeded local users.
+- Updated the dashboard with membership details, generated PDF count, editable agent profile information, editable broker information, and report deletion.
+- Added profile-based field prefill so agent, prepared-by, signature, and brokerage fields can automatically use saved dashboard profile details.
+- Added image field support for local forms, including JPG/PNG uploads, existing-upload display, upload preservation on later saves, and a larger Server Action body size limit.
+- Added Cover Page-specific form prefill from report/project data, subject property data, and saved user profile data.
+- Added `Save & download PDF` and `Save only` actions on local form pages.
+- Added individual local form PDF generation, with a custom Cover Page PDF layout that includes title, subject address, client goal, disclosure box, client information, subject image, agent photo/details, and brokerage logo/details.
+- Updated merged report PDF generation so saved Cover Page submissions render with the custom cover layout.
+- Updated the report builder to focus on the local form library workflow instead of the older native MVP section editor.
+- Added support for form instance IDs, selected-form normalization, display-order preservation, category sorting, and duplicating Additional Photos forms.
+- Moved Subject Comps into the Comparable Market Analysis (CMA) grouping.
+- Added `apps/bpo-platform/lib/profile-prefill.ts` as a new helper file.
+
+### Reasons
+- The Cover Page was the first high-priority WordPress form to migrate into a genuinely usable SaaS-native form.
+- Agent and broker profile data needs to be saved once and reused across report forms to reduce repetitive data entry.
+- Photo-heavy forms and report cover pages need image upload support before Front Photos, Additional Photos, and related addendums can be migrated properly.
+- Agents need a direct way to save a form and generate a client-ready PDF for that individual form, not only export a full merged package.
+- Additional Photos may need multiple copies in one report package, so the builder needed repeatable form instance support.
+
+### Verification
+- Not yet verified after these edits.
+- The working tree currently has uncommitted changes across the BPO app plus a new untracked helper file.
+
+### Next Notes
+- Run `npm run lint`, `npm run typecheck`, and `npm run build` in `apps/bpo-platform`.
+- Browser-test the dashboard profile save flows.
+- Browser-test the Cover Page form with required fields and JPG/PNG uploads.
+- Verify `Save only` returns to the local form with a saved confirmation.
+- Verify `Save & download PDF` creates and downloads a Cover Page PDF with embedded images.
+- Verify merged report export includes the custom Cover Page PDF layout.
+- Test duplicating Additional Photos and confirm each copy can be opened, saved, ordered, and included independently.
+- Commit the verified changes once the workflow is stable.

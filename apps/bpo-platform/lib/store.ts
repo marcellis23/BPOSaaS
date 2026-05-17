@@ -12,20 +12,40 @@ const seedData: AppData = {
       name: "Ronald Williams",
       email: "ronald@example.com",
       role: "owner_admin",
-      organizationId: "org-main"
+      organizationId: "org-main",
+      title: "Real Estate Salesperson / Valuation Specialist",
+      phone: "",
+      website: "",
+      licenseNumber: "",
+      brokerageName: "",
+      brokerageAddress: "",
+      brokerageCity: "",
+      brokerageState: "",
+      brokerageZip: "",
+      brokeragePhone: ""
     },
     {
       id: "user-member",
       name: "Member Agent",
       email: "agent@example.com",
       role: "member_agent",
-      organizationId: "org-main"
+      organizationId: "org-main",
+      title: "",
+      phone: "",
+      website: "",
+      licenseNumber: "",
+      brokerageName: "",
+      brokerageAddress: "",
+      brokerageCity: "",
+      brokerageState: "",
+      brokerageZip: "",
+      brokeragePhone: ""
     }
   ],
   organizations: [{ id: "org-main", name: "BPO Agent Platform", ownerUserId: "user-owner" }],
   memberships: [
     { id: "mem-owner", userId: "user-owner", organizationId: "org-main", status: "active", plan: "owner" },
-    { id: "mem-agent", userId: "user-member", organizationId: "org-main", status: "trial", plan: "member" }
+    { id: "mem-agent", userId: "user-member", organizationId: "org-main", status: "trial", plan: "basic" }
   ],
   properties: [],
   projects: [],

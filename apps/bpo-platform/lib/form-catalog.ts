@@ -89,11 +89,11 @@ export const formCatalog: FormCatalogItem[] = [
   {
     id: "subject-comps",
     title: "Subject Comps",
-    category: "Addendums",
+    category: "Comparable Market Analysis (CMA)",
     description: "Photos and notes for selected comparable properties.",
     wordpressUrl: "https://rwilliamspropertyadvisor.com/comp-photos/",
     workflowType: "external_wordpress",
-    sortOrder: 60,
+    sortOrder: 430,
     recommendedWhen: { valuationGoals: ["as_is", "after_repair", "reconciliation"] }
   },
   {
@@ -183,7 +183,7 @@ export const formCatalog: FormCatalogItem[] = [
     description: "Summary of market trends, inventory, and neighborhood analysis.",
     wordpressUrl: "https://rwilliamspropertyadvisor.com/mar-summary-conclusion/",
     workflowType: "external_wordpress",
-    sortOrder: 320,
+    sortOrder: 340,
     recommendedWhen: { reportTypes: ["BPO", "Market Analysis Report", "Valuation Support Report"] }
   },
   {
@@ -302,7 +302,28 @@ export function getRecommendedFormIds(input: RecommendationInput) {
 }
 
 export function getCatalogForm(id: string) {
-  return formCatalog.find((form) => form.id === id);
+  return formCatalog.find((form) => form.id === getBaseFormId(id));
+}
+
+export function normalizeFormInstanceIds(ids: string[]) {
+  const seen = new Set<string>();
+  return ids.filter((id) => {
+    if (!getCatalogForm(id) || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
+export function getBaseFormId(id: string) {
+  return id.split("__")[0];
+}
+
+export function createFormInstanceId(formId: string, suffix: string) {
+  return `${formId}__${suffix}`;
+}
+
+export function isFormInstance(id: string) {
+  return id.includes("__");
 }
 
 export function getLocalFormHref(projectId: string, formId: string) {
@@ -310,9 +331,12 @@ export function getLocalFormHref(projectId: string, formId: string) {
 }
 
 export function groupCatalogForms(forms: FormCatalogItem[]) {
-  return forms.reduce<Record<string, FormCatalogItem[]>>((groups, form) => {
+  const groups = forms.reduce<Record<string, FormCatalogItem[]>>((groups, form) => {
     groups[form.category] ??= [];
     groups[form.category].push(form);
     return groups;
   }, {});
+
+  Object.values(groups).forEach((group) => group.sort((a, b) => a.sortOrder - b.sortOrder));
+  return groups;
 }
