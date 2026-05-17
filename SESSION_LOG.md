@@ -286,3 +286,33 @@ At the beginning of each new session, read this file before making changes. At t
 ### Next Notes
 - Continue migrating exact legacy form content into the individual files listed in `docs/FORM_LIBRARY_MAP.md`.
 - Add richer field types next, especially currency, percent, computed values, repeatable comparable rows, and photo uploads.
+
+## 2026-05-17 - End-of-Night Handoff
+
+### Current State
+- The project is connected to GitHub and current through commit `43ad44a`.
+- The member app can create report projects, recommend/select form packages, open local app form pages, save local form data, track progress, and export a merged PDF.
+- Each local webform is now editable as its own file in `apps/bpo-platform/lib/forms/`.
+- The form-to-file map is documented in `docs/FORM_LIBRARY_MAP.md`.
+
+### Tomorrow's Goal
+- Convert each original WordPress webform into a truly usable standalone SaaS webform outside WordPress.
+- Work form-by-form in VS Code using the individual files in `apps/bpo-platform/lib/forms/`.
+- Expand schemas beyond placeholder MVP fields to include the real WordPress field groups, copy, calculations, validation needs, and report-ready structure.
+- Update the form dashboard/report builder to be more dynamic so users can choose the exact webforms needed for a report package.
+
+### Suggested Starting Point
+- Open `docs/FORM_LIBRARY_MAP.md` first.
+- Start with the high-priority migration order:
+  1. Cover Page
+  2. Front Photos
+  3. Additional Photos
+  4. PCR Exterior
+  5. PCR Summary
+  6. Current Condition MAR
+  7. Sold CMA Grid
+  8. Sales Comparison Reconciliation
+  9. Signature and Disclosure Page
+  10. PDF Merger
+- Compare each WordPress/imported form against its matching file in `apps/bpo-platform/lib/forms/`.
+- After each form migration, run `npm run lint`, `npm run typecheck`, and a browser check of `/reports/[id]/forms/[formId]`.
