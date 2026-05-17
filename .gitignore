@@ -10,3 +10,4 @@ coverage
 
 apps/*/data/*.json
 apps/*/data/generated
+apps/*/data/uploads

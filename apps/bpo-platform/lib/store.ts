@@ -30,7 +30,8 @@ const seedData: AppData = {
   properties: [],
   projects: [],
   submissions: [],
-  generatedPdfs: []
+  generatedPdfs: [],
+  formProgress: []
 };
 
 async function ensureDataFile() {
@@ -45,7 +46,17 @@ async function ensureDataFile() {
 export async function readData(): Promise<AppData> {
   await ensureDataFile();
   const raw = await fs.readFile(dataPath, "utf8");
-  return JSON.parse(raw) as AppData;
+  const data = JSON.parse(raw) as Partial<AppData>;
+  return {
+    users: data.users ?? seedData.users,
+    organizations: data.organizations ?? seedData.organizations,
+    memberships: data.memberships ?? seedData.memberships,
+    properties: data.properties ?? [],
+    projects: data.projects ?? [],
+    submissions: data.submissions ?? [],
+    generatedPdfs: data.generatedPdfs ?? [],
+    formProgress: data.formProgress ?? []
+  };
 }
 
 export async function writeData(data: AppData) {

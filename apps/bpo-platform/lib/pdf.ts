@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { getCatalogForm } from "./form-catalog";
 import { reportSections } from "./form-sections";
 import type { AppData, GeneratedPdf, ReportProject } from "./types";
 import { newId, nowIso } from "./store";
@@ -42,6 +43,9 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
   const selectedSections = reportSections
     .filter((section) => project.selectedSectionIds.includes(section.id))
     .sort((a, b) => a.order - b.order);
+  const uploadedProgress = data.formProgress
+    .filter((progress) => progress.reportProjectId === project.id && progress.includedInFinal && progress.uploadedPdfPath)
+    .sort((a, b) => a.displayOrder - b.displayOrder);
 
   const pdf = await PDFDocument.create();
   const headingFont = await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -64,6 +68,39 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
   page.drawText(`Client: ${project.clientName || "Not specified"}`, { x: 54, y: 650, size: 12, font: bodyFont });
   page.drawText(`Status: ${project.status.replaceAll("_", " ")}`, { x: 54, y: 630, size: 12, font: bodyFont });
   page.drawText(`Generated: ${new Date().toLocaleString()}`, { x: 54, y: 610, size: 10, font: smallFont, color: rgb(0.39, 0.45, 0.55) });
+
+  if (uploadedProgress.length > 0) {
+    let y = 580;
+    page.drawText("Included uploaded PDFs", { x: 54, y, size: 12, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
+    y -= 20;
+    for (const progress of uploadedProgress) {
+      const form = getCatalogForm(progress.formId);
+      page.drawText(`${progress.displayOrder}. ${form?.title ?? progress.formId}`, { x: 54, y, size: 10, font: bodyFont, color: rgb(0.16, 0.2, 0.26) });
+      y -= 14;
+    }
+
+    for (const progress of uploadedProgress) {
+      if (!progress.uploadedPdfPath) continue;
+      const sourceBytes = await fs.readFile(progress.uploadedPdfPath);
+      const sourcePdf = await PDFDocument.load(sourceBytes);
+      const copiedPages = await pdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
+      copiedPages.forEach((copiedPage) => pdf.addPage(copiedPage));
+    }
+
+    await fs.mkdir(generatedDir, { recursive: true });
+    const bytes = await pdf.save();
+    const fileName = `${project.id}-${Date.now()}.pdf`;
+    const filePath = path.join(generatedDir, fileName);
+    await fs.writeFile(filePath, bytes);
+
+    return {
+      id: newId("pdf"),
+      reportProjectId: project.id,
+      filePath,
+      sectionIds: uploadedProgress.map((progress) => progress.formId),
+      createdAt: nowIso()
+    };
+  }
 
   for (const section of selectedSections) {
     page = addPage(section.title);

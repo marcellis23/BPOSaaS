@@ -174,3 +174,64 @@ At the beginning of each new session, read this file before making changes. At t
 
 ### Next Notes
 - If styling appears broken during local development, stop the dev server, remove `apps/bpo-platform/.next`, and restart `npm run dev -- --port 3000`.
+
+## 2026-05-16 - Guided BPO Report Builder Implementation Paused
+
+### Changes
+- Began implementing the streamlined BPO report creation plan inside the member SaaS app.
+- Added a structured BPO form catalog based on the imported WordPress BPO Form Library.
+- Added guided report intake fields for assignment intent, valuation goal, property type, access condition, and property condition.
+- Added recommendation logic so new report projects can start with a suggested form package instead of forcing agents to choose from a blank list.
+- Added report-level selected form IDs and per-form progress tracking to the data model.
+- Added server actions to update the form package, save checklist progress, upload generated section PDFs, and include uploaded PDFs in final report assembly.
+- Updated the report builder UI to show:
+  - shared report/property data,
+  - selected form package grouped by valuation function,
+  - native MVP sections,
+  - recommended form workflow cards,
+  - external WordPress form links,
+  - status/order/include/notes controls,
+  - PDF upload controls for completed forms.
+- Updated merged PDF generation so uploaded section PDFs can be copied into the final exported package before falling back to native text-section generation.
+
+### Reasons
+- BPO agents need a flexible report-building workflow because client needs, property types, access, and condition vary too much for one standard report form.
+- The MVP should preserve useful existing WordPress webforms while gradually moving the workflow into the SaaS app.
+- The immediate practical workflow is hybrid: choose the right forms in the SaaS, complete external forms where needed, upload generated PDFs, then merge them into one client-ready package.
+
+### Verification
+- Ran `npm run typecheck`; passed.
+- Ran `npm run lint`; passed after removing an unused import.
+- Ran `npm run build`; passed and generated 24 routes.
+- Browser smoke testing was intentionally paused before completion at the user's request.
+
+### Next Notes
+- Resume by opening `/reports/new`, creating a test report with guided fields, and confirming the recommended form workflow appears on the report builder page.
+- Test updating form checklist statuses and selected forms from the builder.
+- Test uploading at least one sample PDF to a form card and exporting the merged report package.
+- Current implementation is uncommitted and should be reviewed, browser-tested, then committed and pushed.
+
+## 2026-05-17 - Guided BPO Report Builder Completed
+
+### Changes
+- Completed the browser smoke test for the guided BPO report creation workflow.
+- Created a test guided BPO report from `/reports/new` using investor analysis, after-repair value, full interior access, and needs-repairs condition.
+- Confirmed the report builder generated a recommended 19-form package grouped by valuation function.
+- Confirmed form progress can be saved with status, display order, include toggle, and notes.
+- Confirmed an uploaded-PDF state appears in the report builder and the final export can merge an uploaded section PDF into the generated report package.
+
+### Reasons
+- This verifies the streamlined workflow is usable for agents before deeper form migration continues.
+- The hybrid MVP now gives agents a practical bridge from the existing WordPress form library to the SaaS report assembly workflow.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`; build generated 24 routes.
+- Browser-tested `/reports/new` and `/reports/[id]`.
+- Verified a generated merged PDF file was created from an uploaded section PDF in local ignored storage.
+
+### Next Notes
+- Replace direct WordPress form handoffs section by section with native SaaS forms, starting with Cover Page, Front Photos, Additional Photos, PCR Exterior, and PCR Summary.
+- Add a real upload E2E test once a browser/file-upload test harness is available.
+- Consider improving form control accessibility by adding explicit `htmlFor`/`id` pairs to labels and controls.

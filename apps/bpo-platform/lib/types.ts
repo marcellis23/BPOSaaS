@@ -11,6 +11,32 @@ export type ReportType =
 
 export type FieldKind = "text" | "textarea" | "select" | "number" | "date";
 
+export type AssignmentIntent =
+  | "seller_due_diligence"
+  | "buyer_due_diligence"
+  | "investor_analysis"
+  | "professional_support"
+  | "default_distressed"
+  | "general_bpo";
+
+export type PropertyType = "single_family" | "multi_unit" | "condo_townhome" | "vacant_lot" | "mixed_use" | "unknown";
+
+export type PropertyAccess = "full_interior" | "exterior_only" | "drive_by" | "restricted" | "vacant_land";
+
+export type PropertyCondition = "market_ready" | "average" | "needs_repairs" | "distressed" | "after_repair" | "unknown";
+
+export type ValuationGoal =
+  | "as_is"
+  | "after_repair"
+  | "rental_income"
+  | "lot_feasibility"
+  | "reconciliation"
+  | "support_only";
+
+export type FormWorkflowType = "external_wordpress" | "native_saas";
+
+export type ReportFormStatus = "not_started" | "in_progress" | "pdf_uploaded" | "reviewed" | "included";
+
 export interface User {
   id: string;
   name: string;
@@ -54,6 +80,11 @@ export interface ReportProject {
   reportType: ReportType;
   status: ReportStatus;
   selectedSectionIds: string[];
+  assignmentIntent?: AssignmentIntent;
+  propertyAccess?: PropertyAccess;
+  propertyCondition?: PropertyCondition;
+  valuationGoal?: ValuationGoal;
+  selectedFormIds?: string[];
   generatedPdfPath?: string;
   createdAt: string;
   updatedAt: string;
@@ -94,6 +125,19 @@ export interface GeneratedPdf {
   createdAt: string;
 }
 
+export interface ReportFormProgress {
+  id: string;
+  reportProjectId: string;
+  formId: string;
+  status: ReportFormStatus;
+  notes?: string;
+  uploadedPdfPath?: string;
+  uploadedPdfName?: string;
+  includedInFinal: boolean;
+  displayOrder: number;
+  updatedAt: string;
+}
+
 export interface AppData {
   users: User[];
   organizations: Organization[];
@@ -102,4 +146,5 @@ export interface AppData {
   projects: ReportProject[];
   submissions: FormSubmission[];
   generatedPdfs: GeneratedPdf[];
+  formProgress: ReportFormProgress[];
 }
