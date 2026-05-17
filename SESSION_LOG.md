@@ -264,3 +264,25 @@ At the beginning of each new session, read this file before making changes. At t
 - Migrate the exact field groups, copy, calculations, and client-ready formatting from the original WordPress forms into these local schemas one form at a time.
 - Add direct per-form PDF generation/download from the local form page.
 - Add image/file upload fields for photo-heavy forms such as Front Photos, Additional Photos, Aerial Views, and Subject Comps.
+
+## 2026-05-17 - Individual Local Form Files
+
+### Changes
+- Split the local form schema registry into one editable file per webform under `apps/bpo-platform/lib/forms/`.
+- Added `apps/bpo-platform/lib/forms/index.ts` as the central registry that imports and orders all local form definitions.
+- Kept `apps/bpo-platform/lib/local-form-schemas.ts` as the small lookup layer used by routes, actions, and PDF export.
+- Added `docs/FORM_LIBRARY_MAP.md` to map each BPO Form Library item to its editable file path.
+
+### Reasons
+- Each webform needs to be easy to find and edit directly in VS Code.
+- Splitting form definitions prevents the local form library from becoming one oversized file as exact WordPress field groups, calculations, and formatting are migrated.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`.
+- Browser-opened a local Gross Rent Multiplier form route and confirmed it rendered fields from the split form file registry.
+
+### Next Notes
+- Continue migrating exact legacy form content into the individual files listed in `docs/FORM_LIBRARY_MAP.md`.
+- Add richer field types next, especially currency, percent, computed values, repeatable comparable rows, and photo uploads.
