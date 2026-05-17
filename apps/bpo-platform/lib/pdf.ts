@@ -3,6 +3,7 @@ import path from "path";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { getCatalogForm } from "./form-catalog";
 import { reportSections } from "./form-sections";
+import { getLocalFormSchema } from "./local-form-schemas";
 import type { AppData, GeneratedPdf, ReportProject } from "./types";
 import { newId, nowIso } from "./store";
 
@@ -40,11 +41,12 @@ function drawWrappedText(
 export async function createMergedReportPdf(data: AppData, project: ReportProject): Promise<GeneratedPdf> {
   const property = data.properties.find((item) => item.id === project.propertyId);
   const submissions = data.submissions.filter((item) => item.reportProjectId === project.id);
+  const submissionBySection = new Map(submissions.map((submission) => [submission.sectionId, submission]));
   const selectedSections = reportSections
     .filter((section) => project.selectedSectionIds.includes(section.id))
     .sort((a, b) => a.order - b.order);
-  const uploadedProgress = data.formProgress
-    .filter((progress) => progress.reportProjectId === project.id && progress.includedInFinal && progress.uploadedPdfPath)
+  const selectedFormProgress = data.formProgress
+    .filter((progress) => progress.reportProjectId === project.id && progress.includedInFinal)
     .sort((a, b) => a.displayOrder - b.displayOrder);
 
   const pdf = await PDFDocument.create();
@@ -69,22 +71,50 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
   page.drawText(`Status: ${project.status.replaceAll("_", " ")}`, { x: 54, y: 630, size: 12, font: bodyFont });
   page.drawText(`Generated: ${new Date().toLocaleString()}`, { x: 54, y: 610, size: 10, font: smallFont, color: rgb(0.39, 0.45, 0.55) });
 
-  if (uploadedProgress.length > 0) {
+  if (selectedFormProgress.length > 0) {
     let y = 580;
-    page.drawText("Included uploaded PDFs", { x: 54, y, size: 12, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
+    page.drawText("Included report forms", { x: 54, y, size: 12, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
     y -= 20;
-    for (const progress of uploadedProgress) {
+    for (const progress of selectedFormProgress) {
       const form = getCatalogForm(progress.formId);
       page.drawText(`${progress.displayOrder}. ${form?.title ?? progress.formId}`, { x: 54, y, size: 10, font: bodyFont, color: rgb(0.16, 0.2, 0.26) });
       y -= 14;
     }
 
-    for (const progress of uploadedProgress) {
-      if (!progress.uploadedPdfPath) continue;
-      const sourceBytes = await fs.readFile(progress.uploadedPdfPath);
-      const sourcePdf = await PDFDocument.load(sourceBytes);
-      const copiedPages = await pdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
-      copiedPages.forEach((copiedPage) => pdf.addPage(copiedPage));
+    for (const progress of selectedFormProgress) {
+      const form = getCatalogForm(progress.formId);
+      const schema = getLocalFormSchema(progress.formId);
+
+      if (progress.uploadedPdfPath) {
+        const sourceBytes = await fs.readFile(progress.uploadedPdfPath);
+        const sourcePdf = await PDFDocument.load(sourceBytes);
+        const copiedPages = await pdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
+        copiedPages.forEach((copiedPage) => pdf.addPage(copiedPage));
+        continue;
+      }
+
+      if (!schema) continue;
+      page = addPage(schema.title);
+      page.drawText(schema.category, { x: 54, y: 696, size: 11, font: headingFont, color: rgb(0.1, 0.28, 0.6) });
+      page.drawText(form?.description ?? schema.description, { x: 54, y: 676, size: 9, font: smallFont, color: rgb(0.39, 0.45, 0.55) });
+      let formY = 646;
+      const submission = submissionBySection.get(schema.id);
+
+      if (!submission) {
+        page.drawText("No local submission saved for this form.", { x: 54, y: formY, size: 11, font: smallFont, color: rgb(0.56, 0.36, 0.1) });
+        continue;
+      }
+
+      for (const field of schema.fields) {
+        if (formY < 94) {
+          page = addPage(`${schema.title} continued`);
+          formY = 680;
+        }
+        const value = submission.values[field.id]?.trim() || "Not provided";
+        page.drawText(field.label, { x: 54, y: formY, size: 10, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
+        formY -= 16;
+        formY = drawWrappedText(page, value, 54, formY, { size: 10, maxWidth: 500, lineHeight: 13, font: bodyFont }) - 10;
+      }
     }
 
     await fs.mkdir(generatedDir, { recursive: true });
@@ -97,7 +127,7 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
       id: newId("pdf"),
       reportProjectId: project.id,
       filePath,
-      sectionIds: uploadedProgress.map((progress) => progress.formId),
+      sectionIds: selectedFormProgress.map((progress) => progress.formId),
       createdAt: nowIso()
     };
   }

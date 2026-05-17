@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { clearUserCookie, requireUser, setUserCookie } from "../lib/auth";
 import { formCatalog, getRecommendedFormIds } from "../lib/form-catalog";
 import { reportSections, reportTypes } from "../lib/form-sections";
+import { getLocalFormSchema } from "../lib/local-form-schemas";
 import { createMergedReportPdf } from "../lib/pdf";
 import { newId, nowIso, readData, updateData } from "../lib/store";
 import type { AssignmentIntent, PropertyAccess, PropertyCondition, PropertyType, ReportFormStatus, ReportType, ValuationGoal } from "../lib/types";
@@ -176,6 +177,48 @@ export async function saveFormProgressAction(formData: FormData) {
     project.updatedAt = nowIso();
   });
   revalidatePath(`/reports/${projectId}`);
+}
+
+export async function saveLocalFormAction(formData: FormData) {
+  const user = await requireUser();
+  const projectId = requireString(formData, "projectId");
+  const formId = requireString(formData, "formId");
+  const schema = getLocalFormSchema(formId);
+  if (!schema) throw new Error("Unknown local form");
+
+  await updateData((data) => {
+    const project = data.projects.find((item) => item.id === projectId && item.organizationId === user.organizationId);
+    if (!project) throw new Error("Report not found");
+
+    const values: Record<string, string> = {};
+    for (const field of schema.fields) {
+      values[field.id] = String(formData.get(field.id) ?? "").trim();
+    }
+
+    const existing = data.submissions.find((item) => item.reportProjectId === projectId && item.sectionId === formId);
+    if (existing) {
+      existing.values = values;
+      existing.updatedAt = nowIso();
+    } else {
+      data.submissions.push({ id: newId("submission"), reportProjectId: projectId, sectionId: formId, values, updatedAt: nowIso() });
+    }
+
+    const selectedFormIds = new Set(project.selectedFormIds ?? []);
+    selectedFormIds.add(formId);
+    project.selectedFormIds = [...selectedFormIds];
+
+    ensureProjectFormProgress(data, projectId, project.selectedFormIds);
+    const progress = data.formProgress.find((item) => item.reportProjectId === projectId && item.formId === formId);
+    if (progress) {
+      progress.status = "reviewed";
+      progress.includedInFinal = true;
+      progress.updatedAt = nowIso();
+    }
+
+    project.updatedAt = nowIso();
+  });
+  revalidatePath(`/reports/${projectId}`);
+  revalidatePath(`/reports/${projectId}/forms/${formId}`);
 }
 
 export async function uploadFormPdfAction(formData: FormData) {

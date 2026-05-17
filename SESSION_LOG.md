@@ -235,3 +235,32 @@ At the beginning of each new session, read this file before making changes. At t
 - Replace direct WordPress form handoffs section by section with native SaaS forms, starting with Cover Page, Front Photos, Additional Photos, PCR Exterior, and PCR Summary.
 - Add a real upload E2E test once a browser/file-upload test harness is available.
 - Consider improving form control accessibility by adding explicit `htmlFor`/`id` pairs to labels and controls.
+
+## 2026-05-17 - Local Webform Transition Foundation
+
+### Changes
+- Added local form schemas for every BPO Form Library catalog item so each selected form can be opened and completed inside the SaaS app.
+- Added dynamic local form routes at `/reports/[id]/forms/[formId]`.
+- Added a local form save action that stores catalog form submissions in the report project and updates form progress.
+- Updated the report builder so `Open form` links point to local app routes instead of the legacy WordPress website.
+- Updated report builder copy and labels to describe the local app form workflow.
+- Updated PDF export so final merged reports can include locally saved form pages, uploaded PDFs, or a mix of both.
+
+### Reasons
+- The project needs to transition away from using the original WordPress website as the production form workspace.
+- Local app forms let member agents create and store report data inside the SaaS workflow while preserving the guided form package model.
+- This gives the app a complete local webform foundation before exact legacy field groups and calculations are migrated in greater detail.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`; build generated the new `/reports/[id]/forms/[formId]` route.
+- Browser-checked the report builder and confirmed `Open form` links now route locally.
+- Browser-opened a local Cover Page form route.
+- Verified a locally saved form submission updates the builder completion count.
+- Verified final PDF export includes the selected local form package and creates a generated PDF file.
+
+### Next Notes
+- Migrate the exact field groups, copy, calculations, and client-ready formatting from the original WordPress forms into these local schemas one form at a time.
+- Add direct per-form PDF generation/download from the local form page.
+- Add image/file upload fields for photo-heavy forms such as Front Photos, Additional Photos, Aerial Views, and Subject Comps.

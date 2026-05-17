@@ -305,6 +305,10 @@ export function getCatalogForm(id: string) {
   return formCatalog.find((form) => form.id === id);
 }
 
+export function getLocalFormHref(projectId: string, formId: string) {
+  return `/reports/${projectId}/forms/${formId}`;
+}
+
 export function groupCatalogForms(forms: FormCatalogItem[]) {
   return forms.reduce<Record<string, FormCatalogItem[]>>((groups, form) => {
     groups[form.category] ??= [];

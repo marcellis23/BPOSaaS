@@ -13,7 +13,7 @@ import {
 import { FieldControl } from "../../../components/FieldControl";
 import { SubmitButton } from "../../../components/SubmitButton";
 import { requireUser } from "../../../lib/auth";
-import { formCatalog, groupCatalogForms } from "../../../lib/form-catalog";
+import { formCatalog, getLocalFormHref, groupCatalogForms } from "../../../lib/form-catalog";
 import { reportSections, reportTypes } from "../../../lib/form-sections";
 import { readData } from "../../../lib/store";
 import type { ReportFormStatus } from "../../../lib/types";
@@ -85,6 +85,10 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
   const allCatalogGroups = groupCatalogForms(formCatalog);
   const progressByForm = new Map(data.formProgress.filter((item) => item.reportProjectId === project.id).map((item) => [item.formId, item]));
   const uploadedCount = selectedCatalogForms.filter((form) => progressByForm.get(form.id)?.uploadedPdfPath).length;
+  const completedLocalCount = selectedCatalogForms.filter((form) => {
+    const progress = progressByForm.get(form.id);
+    return progress?.status === "reviewed" || progress?.status === "included" || progress?.status === "pdf_uploaded";
+  }).length;
 
   return (
     <main className="page-shell">
@@ -148,7 +152,7 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
             <input type="hidden" name="projectId" value={project.id} />
             <div>
               <h2 className="font-bold text-slate-950">Form package</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-600">{selectedCatalogForms.length} selected forms · {uploadedCount} PDFs uploaded</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">{selectedCatalogForms.length} selected forms · {completedLocalCount} completed locally · {uploadedCount} PDFs uploaded</p>
             </div>
             {Object.entries(allCatalogGroups).map(([category, forms]) => (
               <fieldset key={category} className="space-y-2">
@@ -158,7 +162,7 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
                     <input type="checkbox" name="formIds" value={form.id} defaultChecked={selectedFormIds.has(form.id)} className="mt-1" />
                     <span>
                       <span className="block font-semibold text-slate-900">{form.title}</span>
-                      <span className="block text-xs text-slate-500">{form.workflowType === "native_saas" ? "Native / tracked" : "WordPress form"}</span>
+                      <span className="block text-xs text-slate-500">Local app form</span>
                     </span>
                   </label>
                 ))}
@@ -170,7 +174,7 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
           <form action={updateSectionsAction} className="card space-y-3 p-5">
             <input type="hidden" name="projectId" value={project.id} />
             <h2 className="font-bold text-slate-950">Native MVP sections</h2>
-            <p className="text-sm leading-6 text-slate-600">Early migrated forms remain available while the full library moves into the app.</p>
+            <p className="text-sm leading-6 text-slate-600">Legacy MVP sections remain available while the local form library becomes the primary workflow.</p>
             {reportSections.map((section) => (
               <label key={section.id} className="flex items-start gap-3 rounded-md border border-slate-200 p-3 text-sm">
                 <input type="checkbox" name="sectionIds" value={section.id} defaultChecked={selected.has(section.id)} disabled={section.required} className="mt-1" />
@@ -186,7 +190,7 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
 
           <div className="card space-y-3 p-5">
             <h2 className="font-bold text-slate-950">Review & export</h2>
-            <p className="text-sm leading-6 text-slate-600">Upload generated PDFs, review selected forms, then export the merged package.</p>
+            <p className="text-sm leading-6 text-slate-600">Complete local forms, attach any outside PDFs if needed, then export the merged package.</p>
             <form action={markReadyAction}>
               <input type="hidden" name="projectId" value={project.id} />
               <SubmitButton variant="secondary">Mark ready for review</SubmitButton>
@@ -205,11 +209,11 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
                 <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Guided builder</p>
                 <h2 className="mt-1 text-xl font-bold text-slate-950">Recommended form workflow</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Complete each selected form, generate its PDF, upload it back here, and choose whether it belongs in the final merged report.
+                  Complete each selected form inside the app. You can still attach outside PDFs when needed, but local forms are now the primary workflow.
                 </p>
               </div>
               <span className="h-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                {uploadedCount} of {selectedCatalogForms.length} uploaded
+                {completedLocalCount} of {selectedCatalogForms.length} completed
               </span>
             </div>
             <div className="mt-6 space-y-6">
@@ -227,7 +231,7 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
                               <div className="flex flex-wrap items-center gap-2">
                                 <h4 className="font-bold text-slate-950">{form.title}</h4>
                                 <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
-                                  {form.workflowType === "native_saas" ? "Native / tracked" : "WordPress form"}
+                                  Local app form
                                 </span>
                                 <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold capitalize text-slate-700">
                                   {status.replaceAll("_", " ")}
@@ -238,9 +242,9 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
                                 <p className="mt-2 text-xs font-semibold text-emerald-700">Uploaded: {progress.uploadedPdfName}</p>
                               ) : null}
                             </div>
-                            <a href={form.wordpressUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50">
+                            <Link href={getLocalFormHref(project.id, form.id)} className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50">
                               Open form
-                            </a>
+                            </Link>
                           </div>
                           <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr]">
                             <form action={saveFormProgressAction} className="grid gap-3 rounded-md bg-slate-50 p-3 md:grid-cols-[1fr_96px_auto]">
