@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  duplicateAdditionalPhotosFormAction,
+  duplicateFormInstanceAction,
   exportReportAction,
-  markReadyAction,
+  moveFormOrderAction,
+  removeFormFromReportAction,
   saveFormProgressAction,
   updateFormPlanAction,
   updateProjectAction,
@@ -64,9 +65,13 @@ const statusOptions: Array<{ value: ReportFormStatus; label: string }> = [
   { value: "not_started", label: "Not started" },
   { value: "in_progress", label: "In progress" },
   { value: "pdf_uploaded", label: "PDF uploaded" },
-  { value: "reviewed", label: "Reviewed" },
   { value: "included", label: "Included in final" }
 ];
+
+function normalizeStatus(status?: string): ReportFormStatus {
+  if (status === "not_started" || status === "in_progress" || status === "pdf_uploaded" || status === "included") return status;
+  return status === "reviewed" ? "included" : "not_started";
+}
 
 const formPackageCategoryOrder = [
   "Addendums",
@@ -77,6 +82,8 @@ const formPackageCategoryOrder = [
   "Broker Price Opinion (BPO)",
   "Final Report"
 ];
+
+const repeatableFormIds = new Set(["additional-photos", "other-pdf-addendum"]);
 
 export default async function ReportBuilderPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -100,8 +107,8 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
     .sort((a, b) => (progressByForm.get(a.formInstanceId)?.displayOrder ?? a.form.sortOrder) - (progressByForm.get(b.formInstanceId)?.displayOrder ?? b.form.sortOrder));
   const uploadedCount = selectedCatalogForms.filter(({ formInstanceId }) => progressByForm.get(formInstanceId)?.uploadedPdfPath).length;
   const completedLocalCount = selectedCatalogForms.filter(({ formInstanceId }) => {
-    const progress = progressByForm.get(formInstanceId);
-    return progress?.status === "reviewed" || progress?.status === "included" || progress?.status === "pdf_uploaded";
+    const status = normalizeStatus(progressByForm.get(formInstanceId)?.status);
+    return status === "included" || status === "pdf_uploaded";
   }).length;
 
   return (
@@ -111,14 +118,6 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
           <Link href="/dashboard" className="text-sm font-semibold text-blue-700 hover:text-blue-800">Back to dashboard</Link>
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">{project.title}</h1>
           <p className="mt-2 text-slate-600">{project.reportType} for {project.clientName}</p>
-        </div>
-        <div className="card flex flex-wrap items-center gap-3 p-3">
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold capitalize text-slate-700">{project.status.replaceAll("_", " ")}</span>
-          {project.generatedPdfPath ? (
-            <a href={`/api/reports/${project.id}/download`} className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
-              Download PDF
-            </a>
-          ) : null}
         </div>
       </div>
 
@@ -171,9 +170,7 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
             {allCatalogGroupEntries.map(([category, forms]) => (
               <fieldset key={category} className="space-y-2">
                 <legend className="text-xs font-bold uppercase tracking-wide text-blue-700">{category}</legend>
-                {forms.map((form) => {
-                  const progress = progressByForm.get(form.id);
-                  return (
+                {forms.map((form) => (
                   <label key={form.id} className="grid gap-3 rounded-md border border-slate-200 p-3 text-sm">
                     <span className="flex items-start gap-3">
                       <input type="checkbox" name="formIds" value={form.id} defaultChecked={selectedBaseFormIds.has(form.id)} className="mt-1" />
@@ -182,36 +179,12 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
                         <span className="block text-xs text-slate-500">Local app form</span>
                       </span>
                     </span>
-                    <span className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                      Order
-                      <input
-                        name={`formOrder_${form.id}`}
-                        type="number"
-                        min="1"
-                        defaultValue={progress?.displayOrder ?? form.sortOrder}
-                        className="h-8 w-20 rounded-md border border-slate-300 px-2 text-sm font-normal text-slate-900"
-                      />
-                    </span>
                   </label>
-                  );
-                })}
+                ))}
               </fieldset>
             ))}
             <SubmitButton variant="secondary">Update selected forms</SubmitButton>
           </form>
-
-          <div className="card space-y-3 p-5">
-            <h2 className="font-bold text-slate-950">Review & export</h2>
-            <p className="text-sm leading-6 text-slate-600">Complete local forms, attach any outside PDFs if needed, then export the merged package.</p>
-            <form action={markReadyAction}>
-              <input type="hidden" name="projectId" value={project.id} />
-              <SubmitButton variant="secondary">Mark ready for review</SubmitButton>
-            </form>
-            <form action={exportReportAction}>
-              <input type="hidden" name="projectId" value={project.id} />
-              <SubmitButton>Export merged PDF</SubmitButton>
-            </form>
-          </div>
         </aside>
 
         <section className="space-y-6">
@@ -229,9 +202,11 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
               </span>
             </div>
             <div className="mt-6 grid gap-4">
-              {selectedCatalogForms.map(({ formInstanceId, form }) => {
+              {selectedCatalogForms.map(({ formInstanceId, form }, index) => {
                 const progress = progressByForm.get(formInstanceId);
-                const status = progress?.status ?? "not_started";
+                const status = normalizeStatus(progress?.status);
+                const canMoveUp = index > 0;
+                const canMoveDown = index < selectedCatalogForms.length - 1;
                 return (
                   <article key={formInstanceId} className="rounded-lg border border-slate-200 bg-white p-4">
                     <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
@@ -255,18 +230,41 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
                           <p className="mt-2 text-xs font-semibold text-emerald-700">Uploaded: {progress.uploadedPdfName}</p>
                         ) : null}
                       </div>
-                      <Link href={getLocalFormHref(project.id, formInstanceId)} className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50">
-                        Open form
-                      </Link>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        {canMoveUp ? (
+                          <form action={moveFormOrderAction}>
+                            <input type="hidden" name="projectId" value={project.id} />
+                            <input type="hidden" name="formId" value={formInstanceId} />
+                            <input type="hidden" name="direction" value="up" />
+                            <SubmitButton variant="secondary">Move up</SubmitButton>
+                          </form>
+                        ) : null}
+                        {canMoveDown ? (
+                          <form action={moveFormOrderAction}>
+                            <input type="hidden" name="projectId" value={project.id} />
+                            <input type="hidden" name="formId" value={formInstanceId} />
+                            <input type="hidden" name="direction" value="down" />
+                            <SubmitButton variant="secondary">Move down</SubmitButton>
+                          </form>
+                        ) : null}
+                        <Link href={getLocalFormHref(project.id, formInstanceId)} className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50">
+                          Open form
+                        </Link>
+                        <form action={removeFormFromReportAction}>
+                          <input type="hidden" name="projectId" value={project.id} />
+                          <input type="hidden" name="formId" value={formInstanceId} />
+                          <SubmitButton variant="danger">Remove</SubmitButton>
+                        </form>
+                      </div>
                     </div>
                     <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr]">
                       <form action={saveFormProgressAction} className="grid gap-3 rounded-md bg-slate-50 p-3 md:grid-cols-[1fr_96px_auto]">
                         <input type="hidden" name="projectId" value={project.id} />
                         <input type="hidden" name="formId" value={formInstanceId} />
+                        <input type="hidden" name="displayOrder" value={progress?.displayOrder ?? form.sortOrder} />
                         <select name="status" defaultValue={status} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
                           {statusOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
                         </select>
-                        <input name="displayOrder" defaultValue={progress?.displayOrder ?? form.sortOrder} aria-label="Display order" className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
                         <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
                           <input type="checkbox" name="includedInFinal" defaultChecked={progress?.includedInFinal ?? true} />
                           Include
@@ -280,10 +278,11 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
                         <input name="pdf" type="file" accept="application/pdf,.pdf" className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" />
                         <SubmitButton>Upload PDF</SubmitButton>
                       </form>
-                      {getBaseFormId(formInstanceId) === "additional-photos" ? (
-                        <form action={duplicateAdditionalPhotosFormAction} className="rounded-md bg-slate-50 p-3">
+                      {repeatableFormIds.has(getBaseFormId(formInstanceId)) ? (
+                        <form action={duplicateFormInstanceAction} className="rounded-md bg-slate-50 p-3">
                           <input type="hidden" name="projectId" value={project.id} />
-                          <SubmitButton variant="secondary">Duplicate Additional Photos</SubmitButton>
+                          <input type="hidden" name="formId" value={getBaseFormId(formInstanceId)} />
+                          <SubmitButton variant="secondary">Add another {form.title}</SubmitButton>
                         </form>
                       ) : null}
                     </div>
@@ -293,6 +292,28 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
               {selectedCatalogForms.length === 0 ? (
                 <p className="rounded-md bg-amber-50 p-4 text-sm text-amber-900">No forms are selected. Use the Form package panel to select the web forms needed for this report.</p>
               ) : null}
+              <article className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-emerald-700 px-2 py-1 text-xs font-semibold text-white">
+                        Final
+                      </span>
+                      <h4 className="font-bold text-slate-950">Merge PDFs to final report</h4>
+                      <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-emerald-800">
+                        Export step
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-emerald-900">
+                      When you export, uploaded PDFs and saved local form pages are assembled into one client-ready PDF using the display order above.
+                    </p>
+                  </div>
+                  <form action={exportReportAction} className="shrink-0">
+                    <input type="hidden" name="projectId" value={project.id} />
+                    <SubmitButton>Export merged PDF</SubmitButton>
+                  </form>
+                </div>
+              </article>
             </div>
           </section>
 

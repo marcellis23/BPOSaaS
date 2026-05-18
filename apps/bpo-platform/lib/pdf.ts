@@ -1,10 +1,10 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { getCatalogForm } from "./form-catalog";
+import { finalReportMergerFormId, getBaseFormId, getCatalogForm } from "./form-catalog";
 import { reportSections } from "./form-sections";
 import { getLocalFormSchema } from "./local-form-schemas";
-import type { AppData, FormSubmission, GeneratedPdf, ReportProject } from "./types";
+import type { AppData, FormField, FormSubmission, GeneratedPdf, ReportProject } from "./types";
 import { newId, nowIso } from "./store";
 
 const generatedDir = path.join(process.cwd(), "data", "generated");
@@ -103,6 +103,94 @@ function wrapText(text: string, font: import("pdf-lib").PDFFont, size: number, m
   return lines;
 }
 
+async function drawFieldValueOrImage(
+  pdf: PDFDocument,
+  page: import("pdf-lib").PDFPage,
+  field: { id: string; kind: string },
+  submission: FormSubmission,
+  x: number,
+  y: number,
+  fonts: { bodyFont: import("pdf-lib").PDFFont }
+) {
+  if (field.kind === "image") {
+    const upload = parseUploadValue(submission.values[(field as { id: string }).id]);
+    if (upload) {
+      const imageHeight = await drawUploadedImage(pdf, page, upload, x, y, 500, 300);
+      if (imageHeight) return y - imageHeight - 10;
+    }
+  }
+
+  const rawValue = submission.values[(field as { id: string }).id]?.trim() || "Not provided";
+  return drawWrappedText(page, field.kind === "image" && rawValue === "" ? "No image uploaded." : rawValue, x, y, {
+    size: 10,
+    maxWidth: 500,
+    lineHeight: 13,
+    font: fonts.bodyFont
+  }) - 10;
+}
+
+function getRepeaterItemIds(submission: FormSubmission, fieldId: string) {
+  const raw = submission.values[`${fieldId}__items`];
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string" && item.length > 0) : [];
+  } catch {
+    return raw.split(",").map((item) => item.trim()).filter(Boolean);
+  }
+}
+
+async function drawLocalFormField(
+  pdf: PDFDocument,
+  page: import("pdf-lib").PDFPage,
+  field: FormField,
+  submission: FormSubmission,
+  y: number,
+  fonts: { headingFont: import("pdf-lib").PDFFont; bodyFont: import("pdf-lib").PDFFont }
+) {
+  const { headingFont, bodyFont } = fonts;
+  if (field.kind === "divider") return { page, y };
+
+  if (field.kind === "repeater") {
+    const itemIds = getRepeaterItemIds(submission, field.id);
+    page.drawText(field.label, { x: 54, y, size: 10, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
+    y -= 16;
+
+    if (itemIds.length === 0) {
+      y = drawWrappedText(page, "Not provided", 54, y, { size: 10, maxWidth: 500, lineHeight: 13, font: bodyFont }) - 10;
+      return { page, y };
+    }
+
+    for (let index = 0; index < itemIds.length; index += 1) {
+      const itemId = itemIds[index];
+      if (y < 120) {
+        page = pdf.addPage([612, 792]);
+        y = 734;
+      }
+      page.drawText(`Item ${index + 1}`, { x: 54, y, size: 9, font: headingFont, color: rgb(0.39, 0.45, 0.55) });
+      y -= 14;
+
+      for (const subField of field.fields ?? []) {
+        if (y < 120) {
+          page = pdf.addPage([612, 792]);
+          y = 734;
+        }
+        const repeatedField = { ...subField, id: `${field.id}_${itemId}_${subField.id}` };
+        page.drawText(subField.label, { x: 54, y, size: 10, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
+        y -= 16;
+        y = await drawFieldValueOrImage(pdf, page, repeatedField, submission, 54, y, { bodyFont });
+      }
+    }
+
+    return { page, y };
+  }
+
+  page.drawText(field.label, { x: 54, y, size: 10, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
+  y -= 16;
+  y = await drawFieldValueOrImage(pdf, page, field, submission, 54, y, { bodyFont });
+  return { page, y };
+}
+
 async function addCoverPagePdf(
   pdf: PDFDocument,
   submission: FormSubmission,
@@ -176,6 +264,65 @@ async function addCoverPagePdf(
   rightY -= drawCoverField(page, "Phone:", valueOf(submission, "brokeragePhone"), rightX, rightY, fieldOptions);
 }
 
+const frontPhotoFields = [
+  { id: "subjectFront", label: "Subject Front" },
+  { id: "subjectAddressPhoto", label: "Subject Address" },
+  { id: "subjectLeftAngle", label: "Subject Left Angle" },
+  { id: "subjectRightAngle", label: "Subject Right Angle" },
+  { id: "streetViewLeft", label: "Street View Left" },
+  { id: "streetViewRight", label: "Street View Right" },
+  { id: "frontViewAcrossStreet", label: "Front View (Across the Street)" },
+  { id: "streetSign", label: "Street Sign" }
+] as const;
+
+async function addFrontPhotosPdf(
+  pdf: PDFDocument,
+  submission: FormSubmission,
+  fonts: { headingFont: import("pdf-lib").PDFFont; bodyFont: import("pdf-lib").PDFFont; smallFont: import("pdf-lib").PDFFont }
+) {
+  const page = pdf.addPage([612, 792]);
+  const { headingFont, bodyFont } = fonts;
+  page.drawText("Front Photos", { x: 54, y: 740, size: 22, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
+  const subjectAddress = `${valueOf(submission, "subjectAddress")}${valueOf(submission, "subjectUnit") ? ` ${valueOf(submission, "subjectUnit")}` : ""}`.trim();
+  const subjectCityLine = `${valueOf(submission, "subjectCity")}, ${valueOf(submission, "subjectState")} ${valueOf(submission, "subjectZip")}`.replace(/^, /, "").trim();
+  page.drawText(subjectAddress, { x: 54, y: 716, size: 11, font: bodyFont, color: rgb(0.16, 0.2, 0.26) });
+  page.drawText(subjectCityLine, { x: 54, y: 702, size: 11, font: bodyFont, color: rgb(0.16, 0.2, 0.26) });
+
+  const cellWidth = 240;
+  const cellHeight = 150;
+  const gap = 10;
+  const leftX = 54;
+  const topY = 672;
+  const maxImageHeight = 120;
+
+  for (let index = 0; index < frontPhotoFields.length; index += 1) {
+    const field = frontPhotoFields[index];
+    const col = index % 2;
+    const row = Math.floor(index / 2);
+    const x = leftX + col * (cellWidth + gap);
+    const y = topY - row * (cellHeight + 40);
+
+    page.drawRectangle({
+      x: x - 4,
+      y: y - cellHeight - 20,
+      width: cellWidth + 8,
+      height: cellHeight + 24,
+      borderColor: rgb(0.79, 0.84, 0.9),
+      borderWidth: 0.8
+    });
+
+    page.drawText(field.label, { x, y, size: 10, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
+    const upload = parseUploadValue(submission.values[field.id]);
+    const imageY = y - 16;
+    const imageHeight = await drawUploadedImage(pdf, page, upload, x, imageY, cellWidth, maxImageHeight);
+    if (!upload || imageHeight === 0) {
+      page.drawText("No image uploaded.", { x, y: imageY - 14, size: 9, font: bodyFont, color: rgb(0.56, 0.36, 0.1) });
+    }
+  }
+
+  return page;
+}
+
 export async function createMergedReportPdf(data: AppData, project: ReportProject): Promise<GeneratedPdf> {
   const property = data.properties.find((item) => item.id === project.propertyId);
   const submissions = data.submissions.filter((item) => item.reportProjectId === project.id);
@@ -184,7 +331,7 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
     .filter((section) => project.selectedSectionIds.includes(section.id))
     .sort((a, b) => a.order - b.order);
   const selectedFormProgress = data.formProgress
-    .filter((progress) => progress.reportProjectId === project.id && progress.includedInFinal)
+    .filter((progress) => progress.reportProjectId === project.id && progress.includedInFinal && getBaseFormId(progress.formId) !== finalReportMergerFormId)
     .sort((a, b) => a.displayOrder - b.displayOrder);
 
   const pdf = await PDFDocument.create();
@@ -237,6 +384,10 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
         await addCoverPagePdf(pdf, submission, { headingFont, bodyFont, smallFont });
         continue;
       }
+      if (schema.id === "front-photos" && submission) {
+        await addFrontPhotosPdf(pdf, submission, { headingFont, bodyFont, smallFont });
+        continue;
+      }
       page = addPage(schema.title);
       page.drawText(schema.category, { x: 54, y: 696, size: 11, font: headingFont, color: rgb(0.1, 0.28, 0.6) });
       page.drawText(form?.description ?? schema.description, { x: 54, y: 676, size: 9, font: smallFont, color: rgb(0.39, 0.45, 0.55) });
@@ -252,11 +403,9 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
           page = addPage(`${schema.title} continued`);
           formY = 680;
         }
-        const upload = field.kind === "image" ? parseUploadValue(submission.values[field.id]) : null;
-        const value = upload?.name ? `Uploaded image: ${upload.name}` : submission.values[field.id]?.trim() || "Not provided";
-        page.drawText(field.label, { x: 54, y: formY, size: 10, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
-        formY -= 16;
-        formY = drawWrappedText(page, value, 54, formY, { size: 10, maxWidth: 500, lineHeight: 13, font: bodyFont }) - 10;
+        const result = await drawLocalFormField(pdf, page, field, submission, formY, { headingFont, bodyFont });
+        page = result.page;
+        formY = result.y;
       }
     }
 
@@ -291,10 +440,9 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
         page = addPage(`${section.title} continued`);
         y = 680;
       }
-      const value = submission.values[field.id]?.trim() || "Not provided";
-      page.drawText(field.label, { x: 54, y, size: 10, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
-      y -= 16;
-      y = drawWrappedText(page, value, 54, y, { size: 10, maxWidth: 500, lineHeight: 13, font: bodyFont }) - 10;
+      const result = await drawLocalFormField(pdf, page, field, submission, y, { headingFont, bodyFont });
+      page = result.page;
+      y = result.y;
     }
   }
 
@@ -323,8 +471,10 @@ export async function createLocalFormPdf(data: AppData, project: ReportProject, 
 
   if (schema?.id === "cover-page" && submission) {
     await addCoverPagePdf(pdf, submission, { headingFont, bodyFont, smallFont });
+  } else if (schema?.id === "front-photos" && submission) {
+    await addFrontPhotosPdf(pdf, submission, { headingFont, bodyFont, smallFont });
   } else {
-    const page = pdf.addPage([612, 792]);
+    let page = pdf.addPage([612, 792]);
     page.drawText(schema?.title ?? formId, { x: 54, y: 734, size: 22, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
     page.drawLine({ start: { x: 54, y: 716 }, end: { x: 558, y: 716 }, thickness: 1, color: rgb(0.79, 0.84, 0.9) });
     let y = 676;
@@ -333,11 +483,13 @@ export async function createLocalFormPdf(data: AppData, project: ReportProject, 
       page.drawText("No local submission saved for this form.", { x: 54, y, size: 11, font: smallFont, color: rgb(0.56, 0.36, 0.1) });
     } else {
       for (const field of schema.fields) {
-        const upload = field.kind === "image" ? parseUploadValue(submission.values[field.id]) : null;
-        const value = upload?.name ? `Uploaded image: ${upload.name}` : submission.values[field.id]?.trim() || "Not provided";
-        page.drawText(field.label, { x: 54, y, size: 10, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
-        y -= 16;
-        y = drawWrappedText(page, value, 54, y, { size: 10, maxWidth: 500, lineHeight: 13, font: bodyFont }) - 10;
+        if (y < 94) {
+          page = pdf.addPage([612, 792]);
+          y = 734;
+        }
+        const result = await drawLocalFormField(pdf, page, field, submission, y, { headingFont, bodyFont });
+        page = result.page;
+        y = result.y;
       }
     }
   }

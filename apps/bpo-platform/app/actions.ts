@@ -11,7 +11,9 @@ import { getCoverPageDisclosure } from "../lib/forms/cover-page";
 import { getLocalFormSchema } from "../lib/local-form-schemas";
 import { createLocalFormPdf, createMergedReportPdf } from "../lib/pdf";
 import { newId, nowIso, readData, updateData } from "../lib/store";
-import type { AssignmentIntent, PropertyAccess, PropertyCondition, PropertyType, ReportFormStatus, ReportType, ValuationGoal } from "../lib/types";
+import type { AssignmentIntent, FormField, PropertyAccess, PropertyCondition, PropertyType, ReportFormStatus, ReportType, ValuationGoal } from "../lib/types";
+
+const repeatableFormIds = new Set(["additional-photos", "other-pdf-addendum"]);
 
 function requireString(formData: FormData, key: string) {
   const value = String(formData.get(key) ?? "").trim();
@@ -68,6 +70,45 @@ async function saveLocalImageUpload(projectId: string, formId: string, fieldId: 
   const bytes = Buffer.from(await file.arrayBuffer());
   await fs.writeFile(filePath, bytes);
   return JSON.stringify({ kind: "upload", name: file.name, type: file.type, filePath });
+}
+
+async function readLocalFormFieldValue(
+  formData: FormData,
+  field: FormField,
+  projectId: string,
+  formId: string,
+  existingValues: Record<string, string> | undefined,
+  values: Record<string, string>
+) {
+  if (field.kind === "divider") return;
+
+  if (field.kind === "repeater") {
+    const itemIds = optionalString(formData, `${field.id}__items`)
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    values[`${field.id}__items`] = JSON.stringify(itemIds);
+
+    for (const itemId of itemIds) {
+      for (const subField of field.fields ?? []) {
+        const repeatedFieldId = `${field.id}_${itemId}_${subField.id}`;
+        await readLocalFormFieldValue(formData, { ...subField, id: repeatedFieldId }, projectId, formId, existingValues, values);
+      }
+    }
+    return;
+  }
+
+  if (field.kind === "image") {
+    const file = formData.get(field.id);
+    if (file instanceof File && file.size > 0) {
+      values[field.id] = await saveLocalImageUpload(projectId, formId, field.id, file);
+    } else {
+      values[field.id] = existingValues?.[field.id] ?? "";
+    }
+    return;
+  }
+
+  values[field.id] = String(formData.get(field.id) ?? "").trim();
 }
 
 export async function loginAction(formData: FormData) {
@@ -226,10 +267,12 @@ export async function updateFormPlanAction(formData: FormData) {
   await updateData((data) => {
     const project = data.projects.find((item) => item.id === projectId && item.organizationId === user.organizationId);
     if (!project) throw new Error("Report not found");
-    const existingAdditionalPhotoInstances = normalizeFormInstanceIds(project.selectedFormIds ?? []).filter((id) => getBaseFormId(id) === "additional-photos" && id !== "additional-photos");
-    const nextSelectedFormIds = selectedFormIds.includes("additional-photos")
-      ? [...selectedFormIds, ...existingAdditionalPhotoInstances]
-      : selectedFormIds;
+    const existingRepeatableInstances = normalizeFormInstanceIds(project.selectedFormIds ?? []).filter((id) => repeatableFormIds.has(getBaseFormId(id)) && id !== getBaseFormId(id));
+    const selectedBaseIds = new Set(selectedFormIds.map(getBaseFormId));
+    const nextSelectedFormIds = [
+      ...selectedFormIds,
+      ...existingRepeatableInstances.filter((id) => selectedBaseIds.has(getBaseFormId(id)))
+    ];
     const displayOrderEntries: Array<[string, number]> = [];
     for (const formId of nextSelectedFormIds) {
       const submittedOrder = optionalString(formData, `formOrder_${formId}`);
@@ -244,15 +287,18 @@ export async function updateFormPlanAction(formData: FormData) {
   revalidatePath(`/reports/${projectId}`);
 }
 
-export async function duplicateAdditionalPhotosFormAction(formData: FormData) {
+export async function duplicateFormInstanceAction(formData: FormData) {
   const user = await requireUser();
   const projectId = requireString(formData, "projectId");
+  const baseFormId = requireString(formData, "formId");
+  if (!repeatableFormIds.has(baseFormId)) throw new Error("This form cannot be duplicated");
+
   await updateData((data) => {
     const project = data.projects.find((item) => item.id === projectId && item.organizationId === user.organizationId);
     if (!project) throw new Error("Report not found");
     const selectedFormIds = normalizeFormInstanceIds(project.selectedFormIds ?? []);
-    if (!selectedFormIds.includes("additional-photos")) selectedFormIds.push("additional-photos");
-    const instanceId = createFormInstanceId("additional-photos", newId("copy"));
+    if (!selectedFormIds.includes(baseFormId)) selectedFormIds.push(baseFormId);
+    const instanceId = createFormInstanceId(baseFormId, newId("copy"));
     selectedFormIds.push(instanceId);
     project.selectedFormIds = selectedFormIds;
     project.updatedAt = nowIso();
@@ -269,7 +315,9 @@ export async function saveFormProgressAction(formData: FormData) {
   const user = await requireUser();
   const projectId = requireString(formData, "projectId");
   const formId = requireString(formData, "formId");
-  const status = requireString(formData, "status") as ReportFormStatus;
+  const requestedStatus = requireString(formData, "status");
+  const allowedStatuses = new Set<ReportFormStatus>(["not_started", "in_progress", "pdf_uploaded", "included"]);
+  const status = allowedStatuses.has(requestedStatus as ReportFormStatus) ? requestedStatus as ReportFormStatus : "included";
   const includedInFinal = formData.get("includedInFinal") === "on";
   const notes = optionalString(formData, "notes");
   const displayOrder = Number(optionalString(formData, "displayOrder")) || 999;
@@ -289,6 +337,70 @@ export async function saveFormProgressAction(formData: FormData) {
   revalidatePath(`/reports/${projectId}`);
 }
 
+export async function moveFormOrderAction(formData: FormData) {
+  const user = await requireUser();
+  const projectId = requireString(formData, "projectId");
+  const formId = requireString(formData, "formId");
+  const direction = requireString(formData, "direction");
+
+  await updateData((data) => {
+    const project = data.projects.find((item) => item.id === projectId && item.organizationId === user.organizationId);
+    if (!project) throw new Error("Report not found");
+
+    const selectedFormIds = normalizeFormInstanceIds(
+      project.selectedFormIds ?? data.formProgress.filter((item) => item.reportProjectId === projectId).map((item) => item.formId)
+    );
+    project.selectedFormIds = selectedFormIds;
+    ensureProjectFormProgress(data, projectId, selectedFormIds);
+
+    const orderedProgress = data.formProgress
+      .filter((progress) => progress.reportProjectId === projectId && selectedFormIds.includes(progress.formId))
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+    const currentIndex = orderedProgress.findIndex((progress) => progress.formId === formId);
+    const targetIndex = direction === "up" ? currentIndex - 1 : direction === "down" ? currentIndex + 1 : currentIndex;
+
+    if (currentIndex >= 0 && targetIndex >= 0 && targetIndex < orderedProgress.length) {
+      const [moved] = orderedProgress.splice(currentIndex, 1);
+      orderedProgress.splice(targetIndex, 0, moved);
+      orderedProgress.forEach((progress, index) => {
+        progress.displayOrder = index + 1;
+        progress.updatedAt = nowIso();
+      });
+      project.updatedAt = nowIso();
+    }
+  });
+
+  revalidatePath(`/reports/${projectId}`);
+}
+
+export async function removeFormFromReportAction(formData: FormData) {
+  const user = await requireUser();
+  const projectId = requireString(formData, "projectId");
+  const formId = requireString(formData, "formId");
+
+  await updateData((data) => {
+    const project = data.projects.find((item) => item.id === projectId && item.organizationId === user.organizationId);
+    if (!project) throw new Error("Report not found");
+
+    const selectedFormIds = normalizeFormInstanceIds(
+      project.selectedFormIds ?? data.formProgress.filter((item) => item.reportProjectId === projectId).map((item) => item.formId)
+    ).filter((id) => id !== formId);
+    project.selectedFormIds = selectedFormIds;
+    data.formProgress = data.formProgress.filter((progress) => progress.reportProjectId !== projectId || progress.formId !== formId);
+
+    const orderedProgress = data.formProgress
+      .filter((progress) => progress.reportProjectId === projectId && selectedFormIds.includes(progress.formId))
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+    orderedProgress.forEach((progress, index) => {
+      progress.displayOrder = index + 1;
+      progress.updatedAt = nowIso();
+    });
+    project.updatedAt = nowIso();
+  });
+
+  revalidatePath(`/reports/${projectId}`);
+}
+
 export async function saveLocalFormAction(formData: FormData) {
   const user = await requireUser();
   const projectId = requireString(formData, "projectId");
@@ -304,16 +416,7 @@ export async function saveLocalFormAction(formData: FormData) {
     const existing = data.submissions.find((item) => item.reportProjectId === projectId && item.sectionId === formId);
     const values: Record<string, string> = {};
     for (const field of schema.fields) {
-      if (field.kind === "image") {
-        const file = formData.get(field.id);
-        if (file instanceof File && file.size > 0) {
-          values[field.id] = await saveLocalImageUpload(projectId, formId, field.id, file);
-        } else {
-          values[field.id] = existing?.values[field.id] ?? "";
-        }
-      } else {
-        values[field.id] = String(formData.get(field.id) ?? "").trim();
-      }
+      await readLocalFormFieldValue(formData, field, projectId, formId, existing?.values, values);
     }
     if (formId === "cover-page" && !values.mandatoryDisclosure) {
       values.mandatoryDisclosure = getCoverPageDisclosure(values.subjectState ?? "");
@@ -333,7 +436,7 @@ export async function saveLocalFormAction(formData: FormData) {
     ensureProjectFormProgress(data, projectId, project.selectedFormIds);
     const progress = data.formProgress.find((item) => item.reportProjectId === projectId && item.formId === formId);
     if (progress) {
-      progress.status = "reviewed";
+      progress.status = "included";
       progress.includedInFinal = true;
       progress.updatedAt = nowIso();
     }
@@ -424,18 +527,6 @@ export async function updateSectionsAction(formData: FormData) {
   revalidatePath(`/reports/${projectId}`);
 }
 
-export async function markReadyAction(formData: FormData) {
-  const user = await requireUser();
-  const projectId = requireString(formData, "projectId");
-  await updateData((data) => {
-    const project = data.projects.find((item) => item.id === projectId && item.organizationId === user.organizationId);
-    if (!project) throw new Error("Report not found");
-    project.status = "ready_for_review";
-    project.updatedAt = nowIso();
-  });
-  revalidatePath(`/reports/${projectId}`);
-}
-
 export async function exportReportAction(formData: FormData) {
   const user = await requireUser();
   const projectId = requireString(formData, "projectId");
@@ -449,4 +540,5 @@ export async function exportReportAction(formData: FormData) {
     project.updatedAt = nowIso();
   });
   revalidatePath(`/reports/${projectId}`);
+  redirect(`/api/reports/${projectId}/download`);
 }

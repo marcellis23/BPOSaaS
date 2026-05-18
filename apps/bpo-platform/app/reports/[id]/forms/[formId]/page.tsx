@@ -63,12 +63,36 @@ function getCoverPagePrefill(field: FormField, project: ReportProject, user: Use
   return defaults[field.id] ?? "";
 }
 
+function getPropertyFieldPrefill(field: FormField, property?: PropertyRecord) {
+  const defaults: Record<string, string> = {
+    subjectAddress: property?.address ?? "",
+    propertyAddress: property?.address ?? "",
+    address: property?.address ?? "",
+    subjectUnit: property?.unit ?? "",
+    propertyUnit: property?.unit ?? "",
+    unit: property?.unit ?? "",
+    subjectCity: property?.city ?? "",
+    propertyCity: property?.city ?? "",
+    city: property?.city ?? "",
+    subjectState: property?.state ?? "",
+    propertyState: property?.state ?? "",
+    state: property?.state ?? "",
+    subjectZip: property?.zip ?? "",
+    propertyZip: property?.zip ?? "",
+    zip: property?.zip ?? "",
+    parcelId: property?.parcelId ?? "",
+    propertyType: property?.propertyType ?? ""
+  };
+
+  return defaults[field.id] ?? "";
+}
+
 function getFieldValue(formId: string, field: FormField, project: ReportProject, user: User, property?: PropertyRecord, savedValue?: string) {
   if (savedValue) return savedValue;
   if (formId === "cover-page") {
     return getCoverPagePrefill(field, project, user, property) || getProfileFieldPrefill(field, user);
   }
-  return getProfileFieldPrefill(field, user);
+  return getPropertyFieldPrefill(field, property) || getProfileFieldPrefill(field, user);
 }
 
 function getCoverPageSectionTitle(fieldId: string) {
@@ -108,7 +132,7 @@ export default async function LocalReportFormPage({
     : "Property details not saved";
 
   return (
-    <main className="page-shell">
+    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
         <div>
           <Link href={`/reports/${project.id}`} className="text-sm font-semibold text-blue-700 hover:text-blue-800">Back to report builder</Link>
@@ -141,14 +165,18 @@ export default async function LocalReportFormPage({
           <div className="mt-5 grid gap-5 md:grid-cols-2">
             {schema.fields.map((field) => {
               const sectionTitle = schema.id === "cover-page" ? getCoverPageSectionTitle(field.id) : undefined;
+              const isFullWidth = field.kind === "textarea" || field.kind === "repeater" || field.kind === "divider" || !!sectionTitle;
               return (
-                <div key={field.id} className={field.kind === "textarea" || sectionTitle ? "md:col-span-2" : undefined}>
+                <div key={field.id} className={isFullWidth ? "md:col-span-2" : undefined}>
                   {sectionTitle ? (
                     <div className={field.id === "reportTitle" ? "mb-5" : "mb-5 mt-3 border-t border-slate-200 pt-6"}>
                       <h3 className="text-base font-bold text-slate-950">{sectionTitle}</h3>
                     </div>
                   ) : null}
-                <FieldControl field={field} value={getFieldValue(schema.id, field, project, user, property, submission?.values[field.id])} />
+                <FieldControl
+                  field={field}
+                  value={field.kind === "repeater" ? JSON.stringify(submission?.values ?? {}) : getFieldValue(schema.id, field, project, user, property, submission?.values[field.id])}
+                />
                 </div>
               );
             })}

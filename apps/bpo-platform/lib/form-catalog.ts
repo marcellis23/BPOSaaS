@@ -35,6 +35,8 @@ export interface RecommendationInput {
   valuationGoal: ValuationGoal;
 }
 
+export const finalReportMergerFormId = "merge-files-final-report";
+
 export const formCatalog: FormCatalogItem[] = [
   {
     id: "cover-page",
@@ -85,6 +87,15 @@ export const formCatalog: FormCatalogItem[] = [
     workflowType: "external_wordpress",
     sortOrder: 50,
     recommendedWhen: { propertyTypes: ["vacant_lot"], valuationGoals: ["lot_feasibility"] }
+  },
+  {
+    id: "other-pdf-addendum",
+    title: "Other PDF Addendum",
+    category: "Addendums",
+    description: "Upload an additional PDF exhibit, addendum, or supporting document into the final report.",
+    wordpressUrl: "https://rwilliamspropertyadvisor.com/create-report/",
+    workflowType: "native_saas",
+    sortOrder: 60
   },
   {
     id: "subject-comps",
@@ -265,16 +276,6 @@ export const formCatalog: FormCatalogItem[] = [
     workflowType: "native_saas",
     sortOrder: 610,
     alwaysRecommended: true
-  },
-  {
-    id: "merge-files-final-report",
-    title: "Merge Files to Final Report",
-    category: "Final Report",
-    description: "Assemble selected section PDFs into a single client-ready BPO report.",
-    wordpressUrl: "https://rwilliamspropertyadvisor.com/create-report/",
-    workflowType: "native_saas",
-    sortOrder: 620,
-    alwaysRecommended: true
   }
 ];
 
@@ -308,7 +309,7 @@ export function getCatalogForm(id: string) {
 export function normalizeFormInstanceIds(ids: string[]) {
   const seen = new Set<string>();
   return ids.filter((id) => {
-    if (!getCatalogForm(id) || seen.has(id)) return false;
+    if (getBaseFormId(id) === finalReportMergerFormId || !getCatalogForm(id) || seen.has(id)) return false;
     seen.add(id);
     return true;
   });

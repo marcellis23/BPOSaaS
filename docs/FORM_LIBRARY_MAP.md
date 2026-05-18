@@ -11,6 +11,7 @@ The shared app route `/reports/[id]/forms/[formId]` renders these definitions, s
 | Additional Photos | `additional-photos` | `apps/bpo-platform/lib/forms/additional-photos.ts` |
 | Floorplans / Sketches | `floorplans-sketches` | `apps/bpo-platform/lib/forms/floorplans-sketches.ts` |
 | Aerial Views | `aerial-views` | `apps/bpo-platform/lib/forms/aerial-views.ts` |
+| Other PDF Addendum | `other-pdf-addendum` | `apps/bpo-platform/lib/forms/other-pdf-addendum.ts` |
 | Subject Comps | `subject-comps` | `apps/bpo-platform/lib/forms/subject-comps.ts` |
 | Vacant Land Site Data | `vacant-land-site-data` | `apps/bpo-platform/lib/forms/vacant-land-site-data.ts` |
 | PCR - Exterior | `pcr-exterior` | `apps/bpo-platform/lib/forms/pcr-exterior.ts` |

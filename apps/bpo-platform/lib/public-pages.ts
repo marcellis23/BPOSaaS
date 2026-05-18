@@ -356,12 +356,12 @@ export const publicPages: Record<string, InfoPage> = {
   }
 };
 
-export const serviceSectionSlugs = ["seller-services", "buyer-services", "valuation-support-services"];
+export const serviceSectionSlugs = ["seller-services", "buyer-services", "valuation-support-services"] as const;
 
-export function getPublicPage(slug: string) {
+export function getPublicPage(slug: string): InfoPage | undefined {
   return publicPages[slug];
 }
 
-export function getPageUrl(page: InfoPage) {
+export function getPageUrl(page: InfoPage): string {
   return page.parentSlug ? `/${page.parentSlug}/${page.slug}` : `/${page.slug}`;
 }

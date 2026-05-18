@@ -356,3 +356,259 @@ At the beginning of each new session, read this file before making changes. At t
 - Verify merged report export includes the custom Cover Page PDF layout.
 - Test duplicating Additional Photos and confirm each copy can be opened, saved, ordered, and included independently.
 - Commit the verified changes once the workflow is stable.
+
+## 2026-05-17 - Internal Final PDF Merge Step
+
+### Changes
+- Removed `Merge Files to Final Report` from the selectable/recommended form package catalog.
+- Added a final `Merge PDFs to final report` export card at the end of the guided builder workflow.
+- Kept final PDF assembly as an export function instead of a form card.
+- Updated final PDF generation to ignore legacy `merge-files-final-report` progress records if an older report still has one saved.
+- Clarified export copy so users understand the final report is assembled using the guided builder display order.
+
+### Reasons
+- The PDF merger is not a user-completed report form and should not appear in the form package checklist.
+- The merger belongs at the end of the workflow as the final action that assembles uploaded PDFs and saved local form pages into one client-ready PDF.
+- Existing report projects may already contain a saved merger form progress item, so export should defensively skip it.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`; build generated 24 routes successfully.
+
+### Next Notes
+- Browser-check a guided report to confirm `Merge Files to Final Report` no longer appears in the form package list or selected form cards.
+- Export a report with uploaded PDFs and confirm the merged PDF follows the display order from the guided builder.
+
+## 2026-05-17 - Individual Agent Review Flow Cleanup
+
+### Changes
+- Removed the report-level `Mark ready for review` button from the report builder.
+- Removed the per-form `Reviewed` status option from the guided builder status dropdown.
+- Updated saved local forms to move directly to `included` status instead of `reviewed`.
+- Removed the `ready_for_review` report status and deleted the unused mark-ready server action.
+- Added compatibility handling so older local `reviewed` form progress records display as `included`.
+
+### Reasons
+- Reports are completed by individual agents, not routed through a team review workflow.
+- Form progress should track whether a form is not started, in progress, uploaded, or included in the final report without an unnecessary review step.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`; build generated 24 routes successfully.
+
+### Next Notes
+- Browser-check the report builder to confirm no mark-ready or reviewed options remain.
+
+## 2026-05-17 - Single Final Export Step
+
+### Changes
+- Removed the separate sidebar `Review & export` card from the report builder.
+- Kept final report export only in the `Merge PDFs to final report` card at the end of the guided builder workflow.
+- Removed the top report-page status/download control so the header no longer shows an exported badge with a duplicate PDF download button.
+
+### Reasons
+- The separate export card duplicated the final merge/export action.
+- Report assembly should be presented as the final step of the guided builder, not as a parallel sidebar action.
+- PDF download should stay attached to the final merge/export workflow instead of appearing as an extra top-level button.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`; build generated 24 routes successfully.
+
+### Next Notes
+- Browser-check the report builder to confirm there is only one export control.
+
+## 2026-05-17 - Guided Builder Form Reordering
+
+### Changes
+- Added `Move up` and `Move down` controls to each guided builder form card.
+- Added a server action that swaps the selected form with its neighboring form and then renumbers the display order.
+- Removed the visible display-order number input from each guided builder card's progress form so status/notes saves preserve the current order.
+- Removed order number fields from the Form package section so it only handles selecting forms.
+
+### Reasons
+- Manually typing order numbers is too fussy for agents building a report package.
+- Ordering should happen directly where agents are reviewing the guided workflow cards.
+- The Form package section should stay focused on which forms belong in the report, while ordering happens in the guided builder.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`; build generated 24 routes successfully.
+
+### Next Notes
+- Browser-test moving forms up and down in the guided builder and confirm export follows the new order.
+
+## 2026-05-17 - Repeatable PDF Addendum Uploads
+
+### Changes
+- Added `Other PDF Addendum` as a selectable Addendums form package item.
+- Added a local form definition for Other PDF Addendum with title and notes fields.
+- Added Other PDF Addendum to the form registry and form library map.
+- Generalized duplicate form handling so both Additional Photos and Other PDF Addendum can create multiple guided-builder slots.
+- Preserved duplicate slots when updating the form package as long as their base form remains selected.
+
+### Reasons
+- Agents may need to attach multiple miscellaneous PDF exhibits or addendums to the final report.
+- These uploaded addendums should behave like other report package items: upload a PDF, include/exclude it, move it in the final order, and merge it into the final report.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`; build generated 24 routes successfully.
+
+### Next Notes
+- Browser-test selecting Other PDF Addendum, adding multiple copies, uploading PDFs, moving them in the guided builder, and exporting the merged report.
+
+## 2026-05-17 - Guided Builder Form Removal
+
+### Changes
+- Added a `Remove` control to each guided builder form card.
+- Added a server action that removes the selected form instance from the report package and deletes its progress row.
+- Renumbered remaining form progress display order after removal.
+
+### Reasons
+- Agents need an easy way to remove accidentally added forms, especially extra Additional Photos or Other PDF Addendum copies.
+- Removal should happen directly from the guided builder where agents can see the form order and duplicates.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`; build generated 24 routes successfully.
+
+### Next Notes
+- Browser-test removing base forms and duplicated addendum/photo forms from the guided builder.
+
+## 2026-05-17 - Front Photos Form Migration
+
+### Changes
+- Updated `apps/bpo-platform/lib/forms/front-photos.ts` using the WordPress Front Photos source form as the guide.
+- Replaced placeholder fields with subject address fields and the eight required photo uploads:
+  Subject Front, Subject Address, Subject Left Angle, Subject Right Angle, Street View Left, Street View Right, Front View Across the Street, and Street Sign.
+- Reused shared state options from the Cover Page form.
+
+### Reasons
+- Front Photos is one of the high-priority addendum forms and needs to match the real WordPress workflow before agents can complete it natively in the SaaS app.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`; build generated 24 routes successfully.
+
+### Next Notes
+- Browser-check the Front Photos form and confirm all eight image fields render as required uploads.
+
+## 2026-05-17 - Local Form Section Dividers
+
+### Changes
+- Added a `divider` field type for local forms.
+- Updated the generic field renderer to display divider fields as section headings with optional helper text.
+- Updated local form saving and PDF generation to ignore divider fields.
+- Added a `Required Front Photo Set` divider between subject property details and image upload fields in the Front Photos form.
+
+### Reasons
+- Some forms need visual structure without creating fake data fields.
+- Front Photos needs a clear separation between property identity fields and required image uploads.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`; build generated 24 routes successfully.
+
+### Next Notes
+- Browser-check the Front Photos form divider layout.
+
+## 2026-05-17 - Shared Property Prefill
+
+### Changes
+- Added shared property field prefill on local report forms.
+- Front Photos subject address, unit, city, state, ZIP, parcel ID, and property type style fields can now auto-populate from the saved report property when no saved form value exists.
+
+### Reasons
+- Agents should not need to re-enter subject property details on each local form.
+- Front Photos uses the same subject property fields as the report project and should start prefilled.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`; build generated 24 routes successfully.
+
+### Next Notes
+- Browser-check Front Photos and confirm property fields are prefilled from the report.
+
+## 2026-05-17 - Front Photos Upload Size Limit
+
+### Changes
+- Increased the Next.js Server Actions body size limit from `15mb` to `80mb`.
+- Updated the Front Photos upload divider helper text to mention JPG/PNG and resizing very large phone images if upload time is slow.
+
+### Reasons
+- The Front Photos form requires eight image uploads, and real property photos can exceed the prior `15mb` request limit.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`.
+- Ran `npm run build`; build generated 24 routes successfully.
+
+### Next Notes
+- Retry saving the Front Photos form with the same eight images.
+
+## 2026-05-17 - Production Deployment Planning
+
+### Changes
+- Logged architectural requirements for moving the MVP to an online production deployment environment.
+
+### Reasons
+- The current MVP relies on local JSON persistence and handles large (80MB) photo uploads directly through Next.js Server Actions. This works locally but is unsuitable for serverless/cloud environments (e.g., Vercel payload/timeout limits).
+
+### Verification
+- Documented only; no code changes required yet.
+
+### Next Notes
+- **Auth & Database:** Replace local JSON persistence and seeded auth with a production database like PostgreSQL (using Prisma or Drizzle ORM) combined with Auth.js (NextAuth).
+- **File Uploads:** Replace Next.js server-side photo uploads with Direct-to-S3 (or AWS/Cloudflare/Vercel Blob) uploads using presigned URLs from the client to prevent server bottlenecks.
+
+## 2026-05-17 - Additional Photos Migration & Repeater UI
+
+### Changes
+- Migrated the Additional Photos form (`additional-photos.ts`) to use a dynamic repeater block instead of fixed photo slots.
+- Added `"repeater"` to the `FieldKind` union in `types.ts`.
+- Converted `FieldControl.tsx` to a Client Component to support stateful `RepeaterControl` rendering.
+- Implemented a side-by-side (50/50) flex layout for dynamically added repeater items and added a "Remove" row capability.
+- Widened the local form page container (`page.tsx`) to `max-w-7xl` and fixed CSS grid logic so `repeater` and `divider` fields span the full width of the form card.
+
+### Reasons
+- BPO reports vary in photo requirements. A dynamic repeater lets agents add exactly as many additional photos as they need without being constrained by fixed slots.
+- The side-by-side layout prevents the page from becoming excessively long.
+- Widening the page container gives complex form fields more horizontal space to breathe.
+
+### Next Notes
+- Migrate the PCR Exterior form.
+
+## 2026-05-18 - Addendum Form Migration and PDF Export Fixes
+
+### Changes
+- Completed the Additional Photos form migration with subject address fields, photo area selection, optional "Other" description, and a dynamic photo repeater.
+- Migrated `floorplans-sketches.ts` from the WordPress Floor Plan Sketch Photos source form with subject property address fields and a labeled floor plan sketch repeater.
+- Migrated `aerial-views.ts` from the WordPress Aerial Views source form with optional subject property address fields, optional dynamic field photos, and optional fixed map/aerial upload slots.
+- Updated repeater handling so dynamic row IDs are submitted, saved, restored when reopening the form, and included in generated PDFs.
+- Fixed local and merged PDF generation so repeater image uploads are embedded as images instead of printing uploaded file names.
+- Fixed merged report export so the final PDF redirects to the download endpoint after generation, allowing the agent to save it locally.
+
+### Reasons
+- Additional Photos, Floorplans / Sketches, and Aerial Views need to behave like the prior webforms while living inside the SaaS workflow.
+- Dynamic photo forms need to preserve arbitrary user-added rows and render actual uploaded images in generated PDFs.
+- The final export action must complete the agent workflow by delivering the merged PDF download, not just creating the file server-side.
+
+### Verification
+- Browser-tested Additional Photos PDF generation after the repeater image fix; images embedded correctly.
+- Browser-tested merged PDF export; uploaded form PDFs merged and downloaded correctly.
+- Ran `npm run lint`.
+- Ran `npm run typecheck`; it still fails on the existing `getPublicPage()` / `InfoPage | undefined` public-page route typing issue.
+
+### Next Notes
+- Fix the public-page typecheck blocker by either restoring `getPublicPage()` to return `InfoPage` for known slugs or adding `notFound()` guards in public page callers.
+- Continue webform migration with the next library form after Aerial Views.

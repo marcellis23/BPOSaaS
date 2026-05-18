@@ -3,9 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
-      bodySizeLimit: "15mb"
+      bodySizeLimit: "80mb"
     }
   },
+  serverExternalPackages: ["pdf-lib"],
   images: {
     remotePatterns: [
       {
@@ -13,6 +14,16 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com"
       }
     ]
+  },
+  webpack(config) {
+    const externals = Array.isArray(config.externals)
+      ? config.externals
+      : config.externals
+      ? [config.externals]
+      : [];
+
+    config.externals = [...externals, "pdf-lib"];
+    return config;
   }
 };
 

@@ -14,6 +14,7 @@ import { marketAnalysisAfterRepairForm } from "./market-analysis-after-repair";
 import { marketAnalysisGeneralForm } from "./market-analysis-general";
 import { mergeFilesFinalReportForm } from "./merge-files-final-report";
 import { multiUnitApartmentForm } from "./multi-unit-apartment";
+import { otherPdfAddendumForm } from "./other-pdf-addendum";
 import { pcrExteriorForm } from "./pcr-exterior";
 import { pcrInteriorForm } from "./pcr-interior";
 import { pcrSummaryForm } from "./pcr-summary";
@@ -30,6 +31,7 @@ export const localForms: LocalFormDefinition[] = [
   additionalPhotosForm,
   floorplansSketchesForm,
   aerialViewsForm,
+  otherPdfAddendumForm,
   subjectCompsForm,
   vacantLandSiteDataForm,
   pcrExteriorForm,

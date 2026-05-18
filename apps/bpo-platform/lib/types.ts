@@ -1,6 +1,6 @@
 export type UserRole = "owner_admin" | "member_agent";
 
-export type ReportStatus = "draft" | "ready_for_review" | "exported";
+export type ReportStatus = "draft" | "exported";
 
 export type ReportType =
   | "BPO"
@@ -9,7 +9,7 @@ export type ReportType =
   | "Valuation Support Report"
   | "Investor Due Diligence Report";
 
-export type FieldKind = "text" | "textarea" | "select" | "number" | "date" | "email" | "image";
+export type FieldKind = "text" | "textarea" | "select" | "number" | "date" | "email" | "image" | "divider" | "repeater";
 
 export type AssignmentIntent =
   | "seller_due_diligence"
@@ -35,7 +35,7 @@ export type ValuationGoal =
 
 export type FormWorkflowType = "external_wordpress" | "native_saas";
 
-export type ReportFormStatus = "not_started" | "in_progress" | "pdf_uploaded" | "reviewed" | "included";
+export type ReportFormStatus = "not_started" | "in_progress" | "pdf_uploaded" | "included";
 
 export interface User {
   id: string;
@@ -117,6 +117,9 @@ export interface FormField {
   required?: boolean;
   placeholder?: string;
   options?: string[];
+  minItems?: number;
+  addButtonLabel?: string;
+  fields?: FormField[];
 }
 
 export interface FormSubmission {
