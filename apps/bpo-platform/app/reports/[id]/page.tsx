@@ -14,6 +14,7 @@ import { SubmitButton } from "../../../components/SubmitButton";
 import { requireUser } from "../../../lib/auth";
 import { formCatalog, getBaseFormId, getCatalogForm, getLocalFormHref, groupCatalogForms, isFormInstance, normalizeFormInstanceIds } from "../../../lib/form-catalog";
 import { reportTypes } from "../../../lib/form-sections";
+import { stateOptions } from "../../../lib/forms/cover-page";
 import { readData } from "../../../lib/store";
 import type { ReportFormStatus } from "../../../lib/types";
 
@@ -92,6 +93,9 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
   const project = data.projects.find((item) => item.id === id && item.organizationId === user.organizationId);
   if (!project) notFound();
   const property = data.properties.find((item) => item.id === project.propertyId);
+  const clients = data.clients
+    .filter((client) => client.organizationId === user.organizationId)
+    .sort((a, b) => (a.company || a.contact).localeCompare(b.company || b.contact));
   const selectedFormInstanceIds = normalizeFormInstanceIds(project.selectedFormIds ?? data.formProgress.filter((item) => item.reportProjectId === project.id).map((item) => item.formId));
   const selectedBaseFormIds = new Set(selectedFormInstanceIds.map(getBaseFormId));
   const allCatalogGroups = groupCatalogForms(formCatalog);
@@ -130,11 +134,40 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
             <select name="reportType" defaultValue={project.reportType} required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
               {reportTypes.map((type) => <option value={type} key={type}>{type}</option>)}
             </select>
-            <input name="clientName" defaultValue={project.clientName} required placeholder="Client name" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <div className="border-t border-slate-200 pt-4">
+              <h3 className="text-sm font-bold text-slate-950">Client information</h3>
+              <p className="mt-1 text-xs text-slate-500">Choose a saved client or update this report&apos;s client details.</p>
+            </div>
+            <select name="clientId" defaultValue={project.clientId ?? ""} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+              <option value="">New client / entered below</option>
+              {clients.map((client) => (
+                <option value={client.id} key={client.id}>
+                  {[client.company, client.contact, client.city, client.state].filter(Boolean).join(" - ")}
+                </option>
+              ))}
+            </select>
+            <input name="clientCompany" defaultValue={project.clientCompany} placeholder="Client company" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <input name="clientName" defaultValue={project.clientName} placeholder="Client contact" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <input name="clientAddress" defaultValue={project.clientAddress} placeholder="Client address" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <div className="grid grid-cols-4 gap-2">
+              <input name="clientCity" defaultValue={project.clientCity} placeholder="City" className="col-span-2 rounded-md border border-slate-300 px-3 py-2 text-sm" />
+              <select name="clientState" defaultValue={project.clientState ?? ""} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+                <option value="">State</option>
+                {stateOptions.map((state) => <option value={state} key={state}>{state}</option>)}
+              </select>
+              <input name="clientZip" defaultValue={project.clientZip} placeholder="ZIP" className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <input name="clientPhone" defaultValue={project.clientPhone} placeholder="Contact number" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
+              <input name="clientEmail" type="email" defaultValue={project.clientEmail} placeholder="Contact email" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            </div>
+            <div className="border-t border-slate-200 pt-4">
+              <h3 className="text-sm font-bold text-slate-950">Subject property</h3>
+            </div>
             <input name="address" defaultValue={property?.address} required placeholder="Address" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
             <input name="unit" defaultValue={property?.unit} placeholder="Unit" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            <div className="grid grid-cols-3 gap-2">
-              <input name="city" defaultValue={property?.city} required placeholder="City" className="col-span-1 rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <div className="grid grid-cols-4 gap-2">
+              <input name="city" defaultValue={property?.city} required placeholder="City" className="col-span-2 rounded-md border border-slate-300 px-3 py-2 text-sm" />
               <input name="state" defaultValue={property?.state} required placeholder="ST" className="rounded-md border border-slate-300 px-3 py-2 text-sm uppercase" />
               <input name="zip" defaultValue={property?.zip} required placeholder="ZIP" className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
             </div>
@@ -152,12 +185,14 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
             <select name="valuationGoal" defaultValue={project.valuationGoal ?? "as_is"} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
               {valuationGoalOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
             </select>
-            <select name="propertyAccess" defaultValue={project.propertyAccess ?? "exterior_only"} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-              {accessOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
-            </select>
-            <select name="propertyCondition" defaultValue={project.propertyCondition ?? "average"} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-              {conditionOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
-            </select>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <select name="propertyAccess" defaultValue={project.propertyAccess ?? "exterior_only"} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+                {accessOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+              </select>
+              <select name="propertyCondition" defaultValue={project.propertyCondition ?? "average"} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+                {conditionOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+              </select>
+            </div>
             <SubmitButton variant="secondary">Save shared data</SubmitButton>
           </form>
 

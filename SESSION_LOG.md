@@ -612,3 +612,29 @@ At the beginning of each new session, read this file before making changes. At t
 ### Next Notes
 - Fix the public-page typecheck blocker by either restoring `getPublicPage()` to return `InfoPage` for known slugs or adding `notFound()` guards in public page callers.
 - Continue webform migration with the next library form after Aerial Views.
+
+## 2026-05-18 - Client Reuse and New Report Layout Cleanup
+
+### Changes
+- Added reusable client records to the local app data model.
+- Expanded New Report client fields to include company, contact, address, city, state, ZIP code, contact number, and contact email.
+- Added a saved-client picker so agents can reuse client information across multiple reports.
+- Saved client details during report creation and report shared-data edits, while snapshotting the selected client fields onto each report.
+- Updated Cover Page prefill to use the report's saved client company/contact/address/phone/email fields.
+- Updated merged PDF title page to show client company and contact when available.
+- Cleaned up New Report field layout:
+  Project Title and Report Type on one row; client city/state/ZIP as 50/25/25; contact number/email as 50/50; property city/state/ZIP as 50/25/25; property access/condition as 50/50.
+- Mirrored the relevant client/property layout improvements in the report builder shared-data edit panel.
+
+### Reasons
+- Agents may prepare multiple reports for the same client and should not need to repeatedly re-enter client information.
+- Reports need richer client metadata for cover pages, exports, and future workflows.
+- The New Report form should be easier to scan and faster to complete by grouping related fields on sensible rows.
+
+### Verification
+- Ran `npm run lint`.
+- Ran `npm run typecheck`; it still fails on the existing `getPublicPage()` / `InfoPage | undefined` public-page route typing issue.
+
+### Next Notes
+- Browser-test creating a report with a new client, then creating a second report using the saved client picker.
+- Consider adding client management/search as the client list grows.

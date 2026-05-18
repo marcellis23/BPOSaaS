@@ -451,7 +451,7 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
     ? `${property.address}${property.unit ? ` ${property.unit}` : ""}, ${property.city}, ${property.state} ${property.zip}`
     : "No property saved";
   page.drawText(address, { x: pdfStyle.margin, y: 670, size: 12, font: bodyFont, color: pdfStyle.bodyColor, maxWidth: contentWidth() });
-  page.drawText(`Client: ${project.clientName || "Not specified"}`, { x: pdfStyle.margin, y: 650, size: 12, font: bodyFont });
+  page.drawText(`Client: ${[project.clientCompany, project.clientName].filter(Boolean).join(" - ") || "Not specified"}`, { x: pdfStyle.margin, y: 650, size: 12, font: bodyFont, maxWidth: contentWidth() });
   page.drawText(`Status: ${project.status.replaceAll("_", " ")}`, { x: pdfStyle.margin, y: 630, size: 12, font: bodyFont });
   page.drawText(`Generated: ${new Date().toLocaleString()}`, { x: pdfStyle.margin, y: 610, size: 10, font: smallFont, color: pdfStyle.mutedColor });
 

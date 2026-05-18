@@ -80,13 +80,36 @@ export interface PropertyRecord {
   propertyType?: string;
 }
 
+export interface ClientRecord {
+  id: string;
+  organizationId: string;
+  company: string;
+  contact: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  phone?: string;
+  email?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ReportProject {
   id: string;
   organizationId: string;
   ownerUserId: string;
   propertyId: string;
   title: string;
+  clientId?: string;
   clientName: string;
+  clientCompany?: string;
+  clientAddress?: string;
+  clientCity?: string;
+  clientState?: string;
+  clientZip?: string;
+  clientPhone?: string;
+  clientEmail?: string;
   reportType: ReportType;
   status: ReportStatus;
   selectedSectionIds: string[];
@@ -155,6 +178,7 @@ export interface AppData {
   users: User[];
   organizations: Organization[];
   memberships: Membership[];
+  clients: ClientRecord[];
   properties: PropertyRecord[];
   projects: ReportProject[];
   submissions: FormSubmission[];

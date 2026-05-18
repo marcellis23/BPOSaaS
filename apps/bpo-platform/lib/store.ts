@@ -47,6 +47,7 @@ const seedData: AppData = {
     { id: "mem-owner", userId: "user-owner", organizationId: "org-main", status: "active", plan: "owner" },
     { id: "mem-agent", userId: "user-member", organizationId: "org-main", status: "trial", plan: "basic" }
   ],
+  clients: [],
   properties: [],
   projects: [],
   submissions: [],
@@ -71,6 +72,7 @@ export async function readData(): Promise<AppData> {
     users: data.users ?? seedData.users,
     organizations: data.organizations ?? seedData.organizations,
     memberships: data.memberships ?? seedData.memberships,
+    clients: data.clients ?? [],
     properties: data.properties ?? [],
     projects: data.projects ?? [],
     submissions: data.submissions ?? [],

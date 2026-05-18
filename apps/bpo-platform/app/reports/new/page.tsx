@@ -2,6 +2,8 @@ import { createReportAction } from "../../actions";
 import { SubmitButton } from "../../../components/SubmitButton";
 import { requireUser } from "../../../lib/auth";
 import { reportTypes } from "../../../lib/form-sections";
+import { stateOptions } from "../../../lib/forms/cover-page";
+import { readData } from "../../../lib/store";
 
 const assignmentIntentOptions = [
   { value: "general_bpo", label: "General BPO" },
@@ -48,7 +50,11 @@ const valuationGoalOptions = [
 ];
 
 export default async function NewReportPage() {
-  await requireUser();
+  const user = await requireUser();
+  const data = await readData();
+  const clients = data.clients
+    .filter((client) => client.organizationId === user.organizationId)
+    .sort((a, b) => (a.company || a.contact).localeCompare(b.company || b.contact));
 
   return (
     <main className="page-shell">
@@ -58,7 +64,7 @@ export default async function NewReportPage() {
         <p className="mt-2 max-w-2xl text-slate-600">Start with shared property data and guided assignment questions. The app will recommend a form package after you create the project.</p>
       </div>
       <form action={createReportAction} className="card mt-8 grid gap-5 p-6 md:grid-cols-2">
-        <label className="block md:col-span-2">
+        <label className="block">
           <span className="text-sm font-medium text-slate-800">Project Title</span>
           <input name="title" required placeholder="123 Main St BPO" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
         </label>
@@ -70,10 +76,60 @@ export default async function NewReportPage() {
             ))}
           </select>
         </label>
-        <label className="block">
-          <span className="text-sm font-medium text-slate-800">Client Name</span>
-          <input name="clientName" required className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+        <div className="md:col-span-2 border-t border-slate-200 pt-5">
+          <h2 className="text-lg font-bold text-slate-950">Client information</h2>
+          <p className="mt-1 text-sm text-slate-600">Choose a saved client or enter a new client. New details are saved for future reports.</p>
+        </div>
+        <label className="block md:col-span-2">
+          <span className="text-sm font-medium text-slate-800">Saved Client</span>
+          <select name="clientId" defaultValue="" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+            <option value="">New client / enter details below</option>
+            {clients.map((client) => (
+              <option value={client.id} key={client.id}>
+                {[client.company, client.contact, client.city, client.state].filter(Boolean).join(" - ")}
+              </option>
+            ))}
+          </select>
         </label>
+        <label className="block">
+          <span className="text-sm font-medium text-slate-800">Company</span>
+          <input name="clientCompany" autoComplete="organization" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+        </label>
+        <label className="block">
+          <span className="text-sm font-medium text-slate-800">Contact</span>
+          <input name="clientName" autoComplete="name" placeholder="Primary contact name" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+        </label>
+        <label className="block md:col-span-2">
+          <span className="text-sm font-medium text-slate-800">Client Address</span>
+          <input name="clientAddress" autoComplete="street-address" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+        </label>
+        <div className="grid gap-5 md:col-span-2 md:grid-cols-4">
+          <label className="block md:col-span-2">
+            <span className="text-sm font-medium text-slate-800">Client City</span>
+            <input name="clientCity" autoComplete="address-level2" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium text-slate-800">Client State</span>
+            <select name="clientState" defaultValue="" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+              <option value="">State</option>
+              {stateOptions.map((state) => <option value={state} key={state}>{state}</option>)}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium text-slate-800">Client ZIP Code</span>
+            <input name="clientZip" autoComplete="postal-code" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+          </label>
+        </div>
+        <div className="grid gap-5 md:col-span-2 md:grid-cols-2">
+          <label className="block">
+            <span className="text-sm font-medium text-slate-800">Contact Number</span>
+            <input name="clientPhone" type="tel" autoComplete="tel" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium text-slate-800">Contact Email</span>
+            <input name="clientEmail" type="email" autoComplete="email" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+          </label>
+        </div>
         <div className="md:col-span-2 border-t border-slate-200 pt-5">
           <h2 className="text-lg font-bold text-slate-950">Guided report questions</h2>
           <p className="mt-1 text-sm text-slate-600">These choices recommend the right forms. You can adjust the package on the next screen.</p>
@@ -98,18 +154,20 @@ export default async function NewReportPage() {
           <span className="text-sm font-medium text-slate-800">Unit</span>
           <input name="unit" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
         </label>
-        <label className="block">
-          <span className="text-sm font-medium text-slate-800">City</span>
-          <input name="city" required autoComplete="address-level2" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
-        </label>
-        <label className="block">
-          <span className="text-sm font-medium text-slate-800">State</span>
-          <input name="state" required maxLength={2} placeholder="PA" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm uppercase outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
-        </label>
-        <label className="block">
-          <span className="text-sm font-medium text-slate-800">ZIP</span>
-          <input name="zip" required autoComplete="postal-code" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
-        </label>
+        <div className="grid gap-5 md:col-span-2 md:grid-cols-4">
+          <label className="block md:col-span-2">
+            <span className="text-sm font-medium text-slate-800">City</span>
+            <input name="city" required autoComplete="address-level2" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium text-slate-800">State</span>
+            <input name="state" required maxLength={2} placeholder="PA" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm uppercase outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium text-slate-800">ZIP</span>
+            <input name="zip" required autoComplete="postal-code" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+          </label>
+        </div>
         <label className="block">
           <span className="text-sm font-medium text-slate-800">Parcel ID</span>
           <input name="parcelId" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
@@ -120,18 +178,20 @@ export default async function NewReportPage() {
             {propertyTypeOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
           </select>
         </label>
-        <label className="block">
-          <span className="text-sm font-medium text-slate-800">Property Access</span>
-          <select name="propertyAccess" required defaultValue="exterior_only" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-            {accessOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
-          </select>
-        </label>
-        <label className="block md:col-span-2">
-          <span className="text-sm font-medium text-slate-800">Property Condition</span>
-          <select name="propertyCondition" required defaultValue="average" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-            {conditionOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
-          </select>
-        </label>
+        <div className="grid gap-5 md:col-span-2 md:grid-cols-2">
+          <label className="block">
+            <span className="text-sm font-medium text-slate-800">Property Access</span>
+            <select name="propertyAccess" required defaultValue="exterior_only" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+              {accessOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium text-slate-800">Property Condition</span>
+            <select name="propertyCondition" required defaultValue="average" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+              {conditionOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+            </select>
+          </label>
+        </div>
         <div className="md:col-span-2">
           <SubmitButton>Create report</SubmitButton>
         </div>

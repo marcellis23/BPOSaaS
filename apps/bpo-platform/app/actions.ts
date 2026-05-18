@@ -11,7 +11,7 @@ import { getCoverPageDisclosure } from "../lib/forms/cover-page";
 import { getLocalFormSchema } from "../lib/local-form-schemas";
 import { createLocalFormPdf, createMergedReportPdf } from "../lib/pdf";
 import { newId, nowIso, readData, updateData } from "../lib/store";
-import type { AssignmentIntent, FormField, PropertyAccess, PropertyCondition, PropertyType, ReportFormStatus, ReportType, ValuationGoal } from "../lib/types";
+import type { AppData, AssignmentIntent, ClientRecord, FormField, PropertyAccess, PropertyCondition, PropertyType, ReportFormStatus, ReportType, User, ValuationGoal } from "../lib/types";
 
 const repeatableFormIds = new Set(["additional-photos", "other-pdf-addendum"]);
 
@@ -23,6 +23,74 @@ function requireString(formData: FormData, key: string) {
 
 function optionalString(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function readClientFields(formData: FormData) {
+  return {
+    selectedClientId: optionalString(formData, "clientId"),
+    company: optionalString(formData, "clientCompany"),
+    contact: optionalString(formData, "clientName"),
+    address: optionalString(formData, "clientAddress"),
+    city: optionalString(formData, "clientCity"),
+    state: optionalString(formData, "clientState").toUpperCase(),
+    zip: optionalString(formData, "clientZip"),
+    phone: optionalString(formData, "clientPhone"),
+    email: optionalString(formData, "clientEmail").toLowerCase()
+  };
+}
+
+function resolveAndSaveClient(data: AppData, user: User, formData: FormData) {
+  const fields = readClientFields(formData);
+  const selectedClient = fields.selectedClientId
+    ? data.clients.find((client) => client.id === fields.selectedClientId && client.organizationId === user.organizationId)
+    : undefined;
+  const resolved = {
+    company: fields.company || selectedClient?.company || "",
+    contact: fields.contact || selectedClient?.contact || "",
+    address: fields.address || selectedClient?.address || "",
+    city: fields.city || selectedClient?.city || "",
+    state: fields.state || selectedClient?.state || "",
+    zip: fields.zip || selectedClient?.zip || "",
+    phone: fields.phone || selectedClient?.phone || "",
+    email: fields.email || selectedClient?.email || ""
+  };
+
+  if (!resolved.contact && !resolved.company) {
+    throw new Error("Client contact or company is required");
+  }
+
+  const now = nowIso();
+  let client: ClientRecord | undefined = selectedClient;
+  if (!client) {
+    client = data.clients.find((item) =>
+      item.organizationId === user.organizationId &&
+      item.company.toLowerCase() === resolved.company.toLowerCase() &&
+      item.contact.toLowerCase() === resolved.contact.toLowerCase()
+    );
+  }
+
+  if (client) {
+    client.company = resolved.company;
+    client.contact = resolved.contact;
+    client.address = resolved.address;
+    client.city = resolved.city;
+    client.state = resolved.state;
+    client.zip = resolved.zip;
+    client.phone = resolved.phone;
+    client.email = resolved.email;
+    client.updatedAt = now;
+  } else {
+    client = {
+      id: newId("client"),
+      organizationId: user.organizationId,
+      ...resolved,
+      createdAt: now,
+      updatedAt: now
+    };
+    data.clients.push(client);
+  }
+
+  return { client, resolved };
 }
 
 function ensureProjectFormProgress(
@@ -195,6 +263,7 @@ export async function createReportAction(formData: FormData) {
   let projectId = "";
   await updateData((data) => {
     const now = nowIso();
+    const { client, resolved: clientFields } = resolveAndSaveClient(data, user, formData);
     const propertyId = newId("property");
     projectId = newId("report");
     data.properties.push({
@@ -213,7 +282,15 @@ export async function createReportAction(formData: FormData) {
       ownerUserId: user.id,
       propertyId,
       title: requireString(formData, "title"),
-      clientName: requireString(formData, "clientName"),
+      clientId: client.id,
+      clientName: clientFields.contact || clientFields.company,
+      clientCompany: clientFields.company,
+      clientAddress: clientFields.address,
+      clientCity: clientFields.city,
+      clientState: clientFields.state,
+      clientZip: clientFields.zip,
+      clientPhone: clientFields.phone,
+      clientEmail: clientFields.email,
       reportType,
       status: "draft",
       selectedSectionIds: reportSections.filter((section) => section.required || section.order <= 80).map((section) => section.id),
@@ -238,8 +315,17 @@ export async function updateProjectAction(formData: FormData) {
     const project = data.projects.find((item) => item.id === projectId && item.organizationId === user.organizationId);
     if (!project) throw new Error("Report not found");
     const property = data.properties.find((item) => item.id === project.propertyId);
+    const { client, resolved: clientFields } = resolveAndSaveClient(data, user, formData);
     project.title = requireString(formData, "title");
-    project.clientName = requireString(formData, "clientName");
+    project.clientId = client.id;
+    project.clientName = clientFields.contact || clientFields.company;
+    project.clientCompany = clientFields.company;
+    project.clientAddress = clientFields.address;
+    project.clientCity = clientFields.city;
+    project.clientState = clientFields.state;
+    project.clientZip = clientFields.zip;
+    project.clientPhone = clientFields.phone;
+    project.clientEmail = clientFields.email;
     project.reportType = requireString(formData, "reportType") as ReportType;
     project.assignmentIntent = optionalString(formData, "assignmentIntent") as AssignmentIntent || project.assignmentIntent;
     project.propertyAccess = optionalString(formData, "propertyAccess") as PropertyAccess || project.propertyAccess;
