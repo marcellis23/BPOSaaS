@@ -8,34 +8,136 @@ import type { AppData, FormField, FormSubmission, GeneratedPdf, ReportProject } 
 import { newId, nowIso } from "./store";
 
 const generatedDir = path.join(process.cwd(), "data", "generated");
+const pageSize: [number, number] = [612, 792];
+const pdfStyle = {
+  margin: 72,
+  bodySize: 10,
+  bodyLineHeight: 15,
+  labelSize: 10,
+  sectionSize: 15,
+  titleSize: 22,
+  imageBuffer: 20,
+  footerSize: 9,
+  headingColor: rgb(0.06, 0.11, 0.2),
+  bodyColor: rgb(0.16, 0.2, 0.26),
+  mutedColor: rgb(0.39, 0.45, 0.55),
+  ruleColor: rgb(0.79, 0.84, 0.9)
+};
+
+type PdfPage = import("pdf-lib").PDFPage;
+type PdfFont = import("pdf-lib").PDFFont;
+type PdfFonts = {
+  headingFont: PdfFont;
+  bodyFont: PdfFont;
+  smallFont: PdfFont;
+};
+
+function contentWidth() {
+  return pageSize[0] - pdfStyle.margin * 2;
+}
+
+function minY() {
+  return pdfStyle.margin;
+}
+
+function topY() {
+  return pageSize[1] - pdfStyle.margin;
+}
 
 function drawWrappedText(
-  page: import("pdf-lib").PDFPage,
+  page: PdfPage,
   text: string,
   x: number,
   y: number,
-  options: { size: number; maxWidth: number; lineHeight: number; font: import("pdf-lib").PDFFont }
+  options: { size: number; maxWidth: number; lineHeight: number; font: PdfFont; color?: ReturnType<typeof rgb>; minLinesOnPage?: number }
 ) {
-  const words = text.replace(/\s+/g, " ").trim().split(" ");
+  const lines = wrapText(text, options.font, options.size, options.maxWidth);
+  const minLines = Math.min(options.minLinesOnPage ?? 3, lines.length);
+  if (lines.length > 1 && y - minLines * options.lineHeight < minY()) {
+    return { y, needsNewPage: true };
+  }
+
+  for (const item of lines) {
+    page.drawText(item, { x, y, size: options.size, font: options.font, color: options.color ?? pdfStyle.bodyColor });
+    y -= options.lineHeight;
+  }
+  return { y, needsNewPage: false };
+}
+
+function wrapText(text: string, font: PdfFont, size: number, maxWidth: number) {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!normalized) return [];
+  const words = normalized.split(" ");
   const lines: string[] = [];
   let line = "";
 
+  const splitLongWord = (word: string) => {
+    const chunks: string[] = [];
+    let chunk = "";
+    for (const char of word) {
+      const candidate = `${chunk}${char}`;
+      if (font.widthOfTextAtSize(candidate, size) <= maxWidth || !chunk) {
+        chunk = candidate;
+      } else {
+        chunks.push(chunk);
+        chunk = char;
+      }
+    }
+    if (chunk) chunks.push(chunk);
+    return chunks;
+  };
+
   for (const word of words) {
     const candidate = line ? `${line} ${word}` : word;
-    if (options.font.widthOfTextAtSize(candidate, options.size) <= options.maxWidth) {
+    if (font.widthOfTextAtSize(candidate, size) <= maxWidth) {
       line = candidate;
+    } else if (font.widthOfTextAtSize(word, size) > maxWidth) {
+      if (line) {
+        lines.push(line);
+        line = "";
+      }
+      const chunks = splitLongWord(word);
+      lines.push(...chunks.slice(0, -1));
+      line = chunks[chunks.length - 1] ?? "";
     } else {
       if (line) lines.push(line);
       line = word;
     }
   }
   if (line) lines.push(line);
+  return lines;
+}
 
-  for (const item of lines) {
-    page.drawText(item, { x, y, size: options.size, font: options.font, color: rgb(0.16, 0.2, 0.26) });
-    y -= options.lineHeight;
+function addStandardPage(pdf: PDFDocument, title?: string, fonts?: Pick<PdfFonts, "headingFont">) {
+  const page = pdf.addPage(pageSize);
+  let y = topY();
+  if (title && fonts) {
+    page.drawText(title, { x: pdfStyle.margin, y, size: pdfStyle.titleSize, font: fonts.headingFont, color: pdfStyle.headingColor, maxWidth: contentWidth() });
+    y -= 26;
+    page.drawLine({ start: { x: pdfStyle.margin, y }, end: { x: pageSize[0] - pdfStyle.margin, y }, thickness: 1, color: pdfStyle.ruleColor });
+    y -= 30;
   }
-  return y;
+  return { page, y };
+}
+
+function ensureSpace(pdf: PDFDocument, page: PdfPage, y: number, requiredHeight: number, title: string | undefined, fonts: Pick<PdfFonts, "headingFont">) {
+  if (y - requiredHeight >= minY()) return { page, y };
+  return addStandardPage(pdf, title, fonts);
+}
+
+function drawFooterPageNumbers(pdf: PDFDocument, font: PdfFont) {
+  const pages = pdf.getPages();
+  pages.forEach((page, index) => {
+    const text = `Page ${index + 1} of ${pages.length}`;
+    const width = font.widthOfTextAtSize(text, pdfStyle.footerSize);
+    page.drawText(text, {
+      x: pageSize[0] - pdfStyle.margin - width,
+      y: 36,
+      size: pdfStyle.footerSize,
+      font,
+      color: pdfStyle.mutedColor
+    });
+  });
 }
 
 function parseUploadValue(value?: string): { filePath: string; name: string; type: string } | null {
@@ -50,7 +152,7 @@ function parseUploadValue(value?: string): { filePath: string; name: string; typ
 
 async function drawUploadedImage(
   pdf: PDFDocument,
-  page: import("pdf-lib").PDFPage,
+  page: PdfPage,
   upload: { filePath: string; type: string } | null,
   x: number,
   y: number,
@@ -74,59 +176,45 @@ function valueOf(submission: FormSubmission, key: string) {
 }
 
 function drawCoverField(
-  page: import("pdf-lib").PDFPage,
+  page: PdfPage,
   label: string,
   value: string,
   x: number,
   y: number,
-  options: { labelWidth: number; labelFont: import("pdf-lib").PDFFont; bodyFont: import("pdf-lib").PDFFont }
+  options: { labelWidth: number; labelFont: PdfFont; bodyFont: PdfFont }
 ) {
   if (!value.trim()) return 0;
   page.drawText(label, { x, y, size: 9, font: options.labelFont, color: rgb(0.06, 0.11, 0.2) });
-  page.drawText(value.trim(), { x: x + options.labelWidth, y, size: 9, font: options.bodyFont, color: rgb(0.16, 0.2, 0.26), maxWidth: 190 });
+  page.drawText(value.trim(), { x: x + options.labelWidth, y, size: 9, font: options.bodyFont, color: pdfStyle.bodyColor, maxWidth: 190 });
   return 13;
-}
-
-function wrapText(text: string, font: import("pdf-lib").PDFFont, size: number, maxWidth: number) {
-  const words = text.replace(/\s+/g, " ").trim().split(" ");
-  const lines: string[] = [];
-  let line = "";
-  for (const word of words) {
-    const candidate = line ? `${line} ${word}` : word;
-    if (font.widthOfTextAtSize(candidate, size) <= maxWidth) line = candidate;
-    else {
-      if (line) lines.push(line);
-      line = word;
-    }
-  }
-  if (line) lines.push(line);
-  return lines;
 }
 
 async function drawFieldValueOrImage(
   pdf: PDFDocument,
-  page: import("pdf-lib").PDFPage,
+  page: PdfPage,
   field: { id: string; kind: string },
   submission: FormSubmission,
   x: number,
   y: number,
-  fonts: { bodyFont: import("pdf-lib").PDFFont }
+  fonts: { bodyFont: PdfFont },
+  maxWidth = contentWidth()
 ) {
   if (field.kind === "image") {
     const upload = parseUploadValue(submission.values[(field as { id: string }).id]);
     if (upload) {
-      const imageHeight = await drawUploadedImage(pdf, page, upload, x, y, 500, 300);
-      if (imageHeight) return y - imageHeight - 10;
+      const imageHeight = await drawUploadedImage(pdf, page, upload, x, y, maxWidth, Math.min(300, y - minY()));
+      if (imageHeight) return y - imageHeight - pdfStyle.imageBuffer;
     }
   }
 
   const rawValue = submission.values[(field as { id: string }).id]?.trim() || "Not provided";
-  return drawWrappedText(page, field.kind === "image" && rawValue === "" ? "No image uploaded." : rawValue, x, y, {
-    size: 10,
-    maxWidth: 500,
-    lineHeight: 13,
+  const result = drawWrappedText(page, field.kind === "image" && rawValue === "" ? "No image uploaded." : rawValue, x, y, {
+    size: pdfStyle.bodySize,
+    maxWidth,
+    lineHeight: pdfStyle.bodyLineHeight,
     font: fonts.bodyFont
-  }) - 10;
+  });
+  return result.y - 10;
 }
 
 function getRepeaterItemIds(submission: FormSubmission, fieldId: string) {
@@ -142,52 +230,54 @@ function getRepeaterItemIds(submission: FormSubmission, fieldId: string) {
 
 async function drawLocalFormField(
   pdf: PDFDocument,
-  page: import("pdf-lib").PDFPage,
+  page: PdfPage,
   field: FormField,
   submission: FormSubmission,
   y: number,
-  fonts: { headingFont: import("pdf-lib").PDFFont; bodyFont: import("pdf-lib").PDFFont }
+  fonts: Pick<PdfFonts, "headingFont" | "bodyFont">,
+  continuationTitle = "Continued"
 ) {
   const { headingFont, bodyFont } = fonts;
   if (field.kind === "divider") return { page, y };
 
   if (field.kind === "repeater") {
     const itemIds = getRepeaterItemIds(submission, field.id);
-    page.drawText(field.label, { x: 54, y, size: 10, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
-    y -= 16;
+    ({ page, y } = ensureSpace(pdf, page, y, 45, continuationTitle, fonts));
+    page.drawText(field.label, { x: pdfStyle.margin, y, size: pdfStyle.sectionSize, font: headingFont, color: pdfStyle.headingColor });
+    y -= 22;
 
     if (itemIds.length === 0) {
-      y = drawWrappedText(page, "Not provided", 54, y, { size: 10, maxWidth: 500, lineHeight: 13, font: bodyFont }) - 10;
+      const result = drawWrappedText(page, "Not provided", pdfStyle.margin, y, { size: pdfStyle.bodySize, maxWidth: contentWidth(), lineHeight: pdfStyle.bodyLineHeight, font: bodyFont });
+      y = result.y - 10;
       return { page, y };
     }
 
     for (let index = 0; index < itemIds.length; index += 1) {
       const itemId = itemIds[index];
-      if (y < 120) {
-        page = pdf.addPage([612, 792]);
-        y = 734;
-      }
-      page.drawText(`Item ${index + 1}`, { x: 54, y, size: 9, font: headingFont, color: rgb(0.39, 0.45, 0.55) });
-      y -= 14;
+      ({ page, y } = ensureSpace(pdf, page, y, 44, continuationTitle, fonts));
+      page.drawText(`Item ${index + 1}`, { x: pdfStyle.margin, y, size: 10, font: headingFont, color: pdfStyle.mutedColor });
+      y -= 18;
 
       for (const subField of field.fields ?? []) {
-        if (y < 120) {
-          page = pdf.addPage([612, 792]);
-          y = 734;
-        }
         const repeatedField = { ...subField, id: `${field.id}_${itemId}_${subField.id}` };
-        page.drawText(subField.label, { x: 54, y, size: 10, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
+        const upload = repeatedField.kind === "image" ? parseUploadValue(submission.values[repeatedField.id]) : null;
+        const requiredHeight = upload ? Math.min(300, topY() - minY()) + pdfStyle.imageBuffer + 22 : 52;
+        ({ page, y } = ensureSpace(pdf, page, y, requiredHeight, continuationTitle, fonts));
+        page.drawText(subField.label, { x: pdfStyle.margin, y, size: pdfStyle.labelSize, font: headingFont, color: pdfStyle.headingColor });
         y -= 16;
-        y = await drawFieldValueOrImage(pdf, page, repeatedField, submission, 54, y, { bodyFont });
+        y = await drawFieldValueOrImage(pdf, page, repeatedField, submission, pdfStyle.margin, y, { bodyFont }, contentWidth());
       }
     }
 
     return { page, y };
   }
 
-  page.drawText(field.label, { x: 54, y, size: 10, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
+  const upload = field.kind === "image" ? parseUploadValue(submission.values[field.id]) : null;
+  const requiredHeight = upload ? Math.min(300, topY() - minY()) + pdfStyle.imageBuffer + 22 : 52;
+  ({ page, y } = ensureSpace(pdf, page, y, requiredHeight, continuationTitle, fonts));
+  page.drawText(field.label, { x: pdfStyle.margin, y, size: pdfStyle.labelSize, font: headingFont, color: pdfStyle.headingColor });
   y -= 16;
-  y = await drawFieldValueOrImage(pdf, page, field, submission, 54, y, { bodyFont });
+  y = await drawFieldValueOrImage(pdf, page, field, submission, pdfStyle.margin, y, { bodyFont }, contentWidth());
   return { page, y };
 }
 
@@ -210,7 +300,7 @@ async function addCoverPagePdf(
   y -= 22;
 
   const goal = valueOf(submission, "clientGoal") === "Other" ? valueOf(submission, "clientGoalOther") : valueOf(submission, "clientGoal");
-  if (goal) y = drawWrappedText(page, `Client's Stated Goal: ${goal}`, 54, y, { size: 9, maxWidth: 504, lineHeight: 12, font: bodyFont }) - 8;
+  if (goal) y = drawWrappedText(page, `Client's Stated Goal: ${goal}`, 54, y, { size: 9, maxWidth: 504, lineHeight: 12, font: bodyFont }).y - 8;
 
   const disclosure = valueOf(submission, "mandatoryDisclosure");
   if (disclosure) {
@@ -278,42 +368,54 @@ const frontPhotoFields = [
 async function addFrontPhotosPdf(
   pdf: PDFDocument,
   submission: FormSubmission,
-  fonts: { headingFont: import("pdf-lib").PDFFont; bodyFont: import("pdf-lib").PDFFont; smallFont: import("pdf-lib").PDFFont }
+  fonts: PdfFonts
 ) {
-  const page = pdf.addPage([612, 792]);
+  let { page, y } = addStandardPage(pdf, "Front Photos", fonts);
   const { headingFont, bodyFont } = fonts;
-  page.drawText("Front Photos", { x: 54, y: 740, size: 22, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
   const subjectAddress = `${valueOf(submission, "subjectAddress")}${valueOf(submission, "subjectUnit") ? ` ${valueOf(submission, "subjectUnit")}` : ""}`.trim();
   const subjectCityLine = `${valueOf(submission, "subjectCity")}, ${valueOf(submission, "subjectState")} ${valueOf(submission, "subjectZip")}`.replace(/^, /, "").trim();
-  page.drawText(subjectAddress, { x: 54, y: 716, size: 11, font: bodyFont, color: rgb(0.16, 0.2, 0.26) });
-  page.drawText(subjectCityLine, { x: 54, y: 702, size: 11, font: bodyFont, color: rgb(0.16, 0.2, 0.26) });
+  if (subjectAddress) {
+    const result = drawWrappedText(page, subjectAddress, pdfStyle.margin, y, { size: pdfStyle.bodySize, maxWidth: contentWidth(), lineHeight: pdfStyle.bodyLineHeight, font: bodyFont });
+    y = result.y;
+  }
+  if (subjectCityLine) {
+    const result = drawWrappedText(page, subjectCityLine, pdfStyle.margin, y, { size: pdfStyle.bodySize, maxWidth: contentWidth(), lineHeight: pdfStyle.bodyLineHeight, font: bodyFont });
+    y = result.y;
+  }
+  y -= 18;
 
-  const cellWidth = 240;
-  const cellHeight = 150;
-  const gap = 10;
-  const leftX = 54;
-  const topY = 672;
-  const maxImageHeight = 120;
+  const gap = 12;
+  const columns = 2;
+  const rows = 2;
+  const cellWidth = (contentWidth() - gap) / columns;
+  const cellHeight = 220;
+  const maxImageHeight = 170;
 
   for (let index = 0; index < frontPhotoFields.length; index += 1) {
+    const pageSlot = index % (columns * rows);
+    if (index > 0 && pageSlot === 0) {
+      const next = addStandardPage(pdf, "Front Photos continued", fonts);
+      page = next.page;
+      y = next.y;
+    }
     const field = frontPhotoFields[index];
-    const col = index % 2;
-    const row = Math.floor(index / 2);
-    const x = leftX + col * (cellWidth + gap);
-    const y = topY - row * (cellHeight + 40);
+    const col = pageSlot % columns;
+    const row = Math.floor(pageSlot / columns);
+    const x = pdfStyle.margin + col * (cellWidth + gap);
+    const cellTop = y - row * (cellHeight + gap);
 
     page.drawRectangle({
       x: x - 4,
-      y: y - cellHeight - 20,
+      y: cellTop - cellHeight,
       width: cellWidth + 8,
-      height: cellHeight + 24,
-      borderColor: rgb(0.79, 0.84, 0.9),
+      height: cellHeight,
+      borderColor: pdfStyle.ruleColor,
       borderWidth: 0.8
     });
 
-    page.drawText(field.label, { x, y, size: 10, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
+    page.drawText(field.label, { x, y: cellTop - 18, size: pdfStyle.labelSize, font: headingFont, color: pdfStyle.headingColor });
     const upload = parseUploadValue(submission.values[field.id]);
-    const imageY = y - 16;
+    const imageY = cellTop - 36;
     const imageHeight = await drawUploadedImage(pdf, page, upload, x, imageY, cellWidth, maxImageHeight);
     if (!upload || imageHeight === 0) {
       page.drawText("No image uploaded.", { x, y: imageY - 14, size: 9, font: bodyFont, color: rgb(0.56, 0.36, 0.1) });
@@ -336,33 +438,30 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
 
   const pdf = await PDFDocument.create();
   const headingFont = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const bodyFont = await pdf.embedFont(StandardFonts.Helvetica);
+  const bodyFont = await pdf.embedFont(StandardFonts.TimesRoman);
   const smallFont = await pdf.embedFont(StandardFonts.HelveticaOblique);
 
   const addPage = (title: string) => {
-    const page = pdf.addPage([612, 792]);
-    page.drawText(title, { x: 54, y: 734, size: 22, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
-    page.drawLine({ start: { x: 54, y: 716 }, end: { x: 558, y: 716 }, thickness: 1, color: rgb(0.79, 0.84, 0.9) });
-    return page;
+    return addStandardPage(pdf, title, { headingFont }).page;
   };
 
   let page = addPage(project.title);
-  page.drawText(project.reportType, { x: 54, y: 696, size: 13, font: headingFont, color: rgb(0.1, 0.28, 0.6) });
+  page.drawText(project.reportType, { x: pdfStyle.margin, y: 696, size: 13, font: headingFont, color: rgb(0.1, 0.28, 0.6) });
   const address = property
     ? `${property.address}${property.unit ? ` ${property.unit}` : ""}, ${property.city}, ${property.state} ${property.zip}`
     : "No property saved";
-  page.drawText(address, { x: 54, y: 670, size: 12, font: bodyFont, color: rgb(0.16, 0.2, 0.26) });
-  page.drawText(`Client: ${project.clientName || "Not specified"}`, { x: 54, y: 650, size: 12, font: bodyFont });
-  page.drawText(`Status: ${project.status.replaceAll("_", " ")}`, { x: 54, y: 630, size: 12, font: bodyFont });
-  page.drawText(`Generated: ${new Date().toLocaleString()}`, { x: 54, y: 610, size: 10, font: smallFont, color: rgb(0.39, 0.45, 0.55) });
+  page.drawText(address, { x: pdfStyle.margin, y: 670, size: 12, font: bodyFont, color: pdfStyle.bodyColor, maxWidth: contentWidth() });
+  page.drawText(`Client: ${project.clientName || "Not specified"}`, { x: pdfStyle.margin, y: 650, size: 12, font: bodyFont });
+  page.drawText(`Status: ${project.status.replaceAll("_", " ")}`, { x: pdfStyle.margin, y: 630, size: 12, font: bodyFont });
+  page.drawText(`Generated: ${new Date().toLocaleString()}`, { x: pdfStyle.margin, y: 610, size: 10, font: smallFont, color: pdfStyle.mutedColor });
 
   if (selectedFormProgress.length > 0) {
     let y = 580;
-    page.drawText("Included report forms", { x: 54, y, size: 12, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
+    page.drawText("Included report forms", { x: pdfStyle.margin, y, size: 12, font: headingFont, color: pdfStyle.headingColor });
     y -= 20;
     for (const progress of selectedFormProgress) {
       const form = getCatalogForm(progress.formId);
-      page.drawText(`${progress.displayOrder}. ${form?.title ?? progress.formId}`, { x: 54, y, size: 10, font: bodyFont, color: rgb(0.16, 0.2, 0.26) });
+      page.drawText(`${progress.displayOrder}. ${form?.title ?? progress.formId}`, { x: pdfStyle.margin, y, size: 10, font: bodyFont, color: pdfStyle.bodyColor });
       y -= 14;
     }
 
@@ -389,27 +488,24 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
         continue;
       }
       page = addPage(schema.title);
-      page.drawText(schema.category, { x: 54, y: 696, size: 11, font: headingFont, color: rgb(0.1, 0.28, 0.6) });
-      page.drawText(form?.description ?? schema.description, { x: 54, y: 676, size: 9, font: smallFont, color: rgb(0.39, 0.45, 0.55) });
-      let formY = 646;
+      page.drawText(schema.category, { x: pdfStyle.margin, y: 696, size: 11, font: headingFont, color: rgb(0.1, 0.28, 0.6) });
+      const description = drawWrappedText(page, form?.description ?? schema.description, pdfStyle.margin, 676, { size: 9, maxWidth: contentWidth(), lineHeight: 13, font: smallFont, color: pdfStyle.mutedColor });
+      let formY = description.y - 18;
 
       if (!submission) {
-        page.drawText("No local submission saved for this form.", { x: 54, y: formY, size: 11, font: smallFont, color: rgb(0.56, 0.36, 0.1) });
+        page.drawText("No local submission saved for this form.", { x: pdfStyle.margin, y: formY, size: 11, font: smallFont, color: rgb(0.56, 0.36, 0.1) });
         continue;
       }
 
       for (const field of schema.fields) {
-        if (formY < 94) {
-          page = addPage(`${schema.title} continued`);
-          formY = 680;
-        }
-        const result = await drawLocalFormField(pdf, page, field, submission, formY, { headingFont, bodyFont });
+        const result = await drawLocalFormField(pdf, page, field, submission, formY, { headingFont, bodyFont }, `${schema.title} continued`);
         page = result.page;
         formY = result.y;
       }
     }
 
     await fs.mkdir(generatedDir, { recursive: true });
+    drawFooterPageNumbers(pdf, smallFont);
     const bytes = await pdf.save();
     const fileName = `${project.id}-${Date.now()}.pdf`;
     const filePath = path.join(generatedDir, fileName);
@@ -426,27 +522,24 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
 
   for (const section of selectedSections) {
     page = addPage(section.title);
-    page.drawText(section.category, { x: 54, y: 696, size: 11, font: headingFont, color: rgb(0.1, 0.28, 0.6) });
+    page.drawText(section.category, { x: pdfStyle.margin, y: 696, size: 11, font: headingFont, color: rgb(0.1, 0.28, 0.6) });
     let y = 666;
     const submission = submissions.find((item) => item.sectionId === section.id);
 
     if (!submission) {
-      page.drawText("No submission saved for this section.", { x: 54, y, size: 11, font: smallFont, color: rgb(0.56, 0.36, 0.1) });
+      page.drawText("No submission saved for this section.", { x: pdfStyle.margin, y, size: 11, font: smallFont, color: rgb(0.56, 0.36, 0.1) });
       continue;
     }
 
     for (const field of section.fields) {
-      if (y < 94) {
-        page = addPage(`${section.title} continued`);
-        y = 680;
-      }
-      const result = await drawLocalFormField(pdf, page, field, submission, y, { headingFont, bodyFont });
+      const result = await drawLocalFormField(pdf, page, field, submission, y, { headingFont, bodyFont }, `${section.title} continued`);
       page = result.page;
       y = result.y;
     }
   }
 
   await fs.mkdir(generatedDir, { recursive: true });
+  drawFooterPageNumbers(pdf, smallFont);
   const bytes = await pdf.save();
   const fileName = `${project.id}-${Date.now()}.pdf`;
   const filePath = path.join(generatedDir, fileName);
@@ -464,7 +557,7 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
 export async function createLocalFormPdf(data: AppData, project: ReportProject, formId: string): Promise<GeneratedPdf> {
   const pdf = await PDFDocument.create();
   const headingFont = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const bodyFont = await pdf.embedFont(StandardFonts.Helvetica);
+  const bodyFont = await pdf.embedFont(StandardFonts.TimesRoman);
   const smallFont = await pdf.embedFont(StandardFonts.HelveticaOblique);
   const schema = getLocalFormSchema(formId);
   const submission = data.submissions.find((item) => item.reportProjectId === project.id && item.sectionId === formId);
@@ -474,20 +567,13 @@ export async function createLocalFormPdf(data: AppData, project: ReportProject, 
   } else if (schema?.id === "front-photos" && submission) {
     await addFrontPhotosPdf(pdf, submission, { headingFont, bodyFont, smallFont });
   } else {
-    let page = pdf.addPage([612, 792]);
-    page.drawText(schema?.title ?? formId, { x: 54, y: 734, size: 22, font: headingFont, color: rgb(0.06, 0.11, 0.2) });
-    page.drawLine({ start: { x: 54, y: 716 }, end: { x: 558, y: 716 }, thickness: 1, color: rgb(0.79, 0.84, 0.9) });
-    let y = 676;
+    let { page, y } = addStandardPage(pdf, schema?.title ?? formId, { headingFont });
 
     if (!schema || !submission) {
-      page.drawText("No local submission saved for this form.", { x: 54, y, size: 11, font: smallFont, color: rgb(0.56, 0.36, 0.1) });
+      page.drawText("No local submission saved for this form.", { x: pdfStyle.margin, y, size: 11, font: smallFont, color: rgb(0.56, 0.36, 0.1) });
     } else {
       for (const field of schema.fields) {
-        if (y < 94) {
-          page = pdf.addPage([612, 792]);
-          y = 734;
-        }
-        const result = await drawLocalFormField(pdf, page, field, submission, y, { headingFont, bodyFont });
+        const result = await drawLocalFormField(pdf, page, field, submission, y, { headingFont, bodyFont }, `${schema.title} continued`);
         page = result.page;
         y = result.y;
       }
@@ -495,6 +581,7 @@ export async function createLocalFormPdf(data: AppData, project: ReportProject, 
   }
 
   await fs.mkdir(generatedDir, { recursive: true });
+  drawFooterPageNumbers(pdf, smallFont);
   const bytes = await pdf.save();
   const fileName = `${project.id}-${formId}-${Date.now()}.pdf`;
   const filePath = path.join(generatedDir, fileName);
