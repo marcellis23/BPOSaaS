@@ -5,6 +5,7 @@ import {
   exportReportAction,
   moveFormOrderAction,
   removeFormFromReportAction,
+  removeUploadedFormPdfAction,
   saveFormProgressAction,
   updateFormPlanAction,
   updateProjectAction,
@@ -262,7 +263,16 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
                         </div>
                         <p className="mt-2 text-sm leading-6 text-slate-600">{form.description}</p>
                         {progress?.uploadedPdfName ? (
-                          <p className="mt-2 text-xs font-semibold text-emerald-700">Uploaded: {progress.uploadedPdfName}</p>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <p className="text-xs font-semibold text-emerald-700">Uploaded: {progress.uploadedPdfName}</p>
+                            <form action={removeUploadedFormPdfAction}>
+                              <input type="hidden" name="projectId" value={project.id} />
+                              <input type="hidden" name="formId" value={formInstanceId} />
+                              <button type="submit" className="inline-flex min-h-7 items-center justify-center rounded-md bg-red-600 px-2 py-1 text-xs font-semibold text-white shadow-sm hover:bg-red-700">
+                                Remove PDF
+                              </button>
+                            </form>
+                          </div>
                         ) : null}
                       </div>
                       <div className="flex shrink-0 flex-wrap gap-2">

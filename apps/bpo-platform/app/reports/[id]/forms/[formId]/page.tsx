@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { saveLocalFormAction } from "../../../../actions";
-import { FieldControl } from "../../../../../components/FieldControl";
+import { LocalFormFields } from "../../../../../components/LocalFormFields";
 import { SubmitButton } from "../../../../../components/SubmitButton";
 import { requireUser } from "../../../../../lib/auth";
 import { getCatalogForm } from "../../../../../lib/form-catalog";
@@ -46,14 +46,7 @@ function getCoverPagePrefill(field: FormField, project: ReportProject, user: Use
     subjectState: property?.state ?? "",
     subjectZip: property?.zip ?? "",
     mandatoryDisclosure: getCoverPageDisclosure(property?.state ?? ""),
-    clientCompany: project.clientCompany ?? "",
     clientPoc: project.clientName,
-    clientAddress: project.clientAddress ?? "",
-    clientCity: project.clientCity ?? "",
-    clientState: project.clientState ?? "",
-    clientZip: project.clientZip ?? "",
-    clientPhone: project.clientPhone ?? "",
-    clientEmail: project.clientEmail ?? "",
     agentName: user.name,
     agentTitle: user.title ?? "",
     agentPhone: user.phone ?? "",
@@ -137,6 +130,11 @@ export default async function LocalReportFormPage({
   const address = property
     ? `${property.address}${property.unit ? ` ${property.unit}` : ""}, ${property.city}, ${property.state} ${property.zip}`
     : "Property details not saved";
+  const fields = schema.fields.map((field) => ({
+    field,
+    sectionTitle: schema.id === "cover-page" ? getCoverPageSectionTitle(field.id) : undefined,
+    value: field.kind === "repeater" ? JSON.stringify(submission?.values ?? {}) : getFieldValue(schema.id, field, project, user, property, submission?.values[field.id])
+  }));
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -169,25 +167,7 @@ export default async function LocalReportFormPage({
               Form saved to this report package.
             </div>
           ) : null}
-          <div className="mt-5 grid gap-5 md:grid-cols-2">
-            {schema.fields.map((field) => {
-              const sectionTitle = schema.id === "cover-page" ? getCoverPageSectionTitle(field.id) : undefined;
-              const isFullWidth = field.kind === "textarea" || field.kind === "repeater" || field.kind === "divider" || !!sectionTitle;
-              return (
-                <div key={field.id} className={isFullWidth ? "md:col-span-2" : undefined}>
-                  {sectionTitle ? (
-                    <div className={field.id === "reportTitle" ? "mb-5" : "mb-5 mt-3 border-t border-slate-200 pt-6"}>
-                      <h3 className="text-base font-bold text-slate-950">{sectionTitle}</h3>
-                    </div>
-                  ) : null}
-                <FieldControl
-                  field={field}
-                  value={field.kind === "repeater" ? JSON.stringify(submission?.values ?? {}) : getFieldValue(schema.id, field, project, user, property, submission?.values[field.id])}
-                />
-                </div>
-              );
-            })}
-          </div>
+          <LocalFormFields fields={fields} />
           <div className="mt-6 flex flex-wrap gap-3">
             <SubmitButton name="intent" value="save_export">Save & download PDF</SubmitButton>
             <SubmitButton name="intent" value="save" variant="secondary">Save only</SubmitButton>

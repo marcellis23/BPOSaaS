@@ -228,6 +228,17 @@ function getRepeaterItemIds(submission: FormSubmission, fieldId: string) {
   }
 }
 
+function getRepeaterTextItems(submission: FormSubmission, fieldId: string) {
+  return getRepeaterItemIds(submission, fieldId)
+    .map((itemId) => valueOf(submission, `${fieldId}_${itemId}_text`))
+    .filter(Boolean);
+}
+
+function isFieldVisibleForSubmission(field: FormField, submission: FormSubmission) {
+  if (!field.visibleWhen) return true;
+  return field.visibleWhen.values.includes(valueOf(submission, field.visibleWhen.fieldId));
+}
+
 async function drawLocalFormField(
   pdf: PDFDocument,
   page: PdfPage,
@@ -425,6 +436,416 @@ async function addFrontPhotosPdf(
   return page;
 }
 
+async function addAdditionalPhotosPdf(
+  pdf: PDFDocument,
+  submission: FormSubmission,
+  fonts: PdfFonts
+) {
+  const { bodyFont } = fonts;
+  let { page, y } = addStandardPage(pdf, "Additional Photos", fonts);
+  const subjectAddress = `${valueOf(submission, "subjectAddress")}${valueOf(submission, "subjectUnit") ? ` ${valueOf(submission, "subjectUnit")}` : ""}`.trim();
+  const subjectCityLine = `${valueOf(submission, "subjectCity")}, ${valueOf(submission, "subjectState")} ${valueOf(submission, "subjectZip")}`.replace(/^, /, "").trim();
+  const photoArea = valueOf(submission, "photoAreaSelect") === "Other" && valueOf(submission, "photoAreaOther")
+    ? valueOf(submission, "photoAreaOther")
+    : valueOf(submission, "photoAreaSelect");
+
+  for (const line of [subjectAddress, subjectCityLine, photoArea ? `Photo Area: ${photoArea}` : ""]) {
+    if (!line) continue;
+    const result = drawWrappedText(page, line, pdfStyle.margin, y, {
+      size: pdfStyle.bodySize,
+      maxWidth: contentWidth(),
+      lineHeight: pdfStyle.bodyLineHeight,
+      font: bodyFont
+    });
+    y = result.y;
+  }
+  y -= 18;
+
+  const itemIds = getRepeaterItemIds(submission, "photoList");
+  const photos = itemIds
+    .map((itemId) => ({
+      upload: parseUploadValue(submission.values[`photoList_${itemId}_photo`]),
+      description: submission.values[`photoList_${itemId}_description`]?.trim() ?? ""
+    }))
+    .filter((item) => item.upload);
+
+  if (photos.length === 0) {
+    page.drawText("No additional photos uploaded.", { x: pdfStyle.margin, y, size: 11, font: bodyFont, color: pdfStyle.mutedColor });
+    return page;
+  }
+
+  const columns = 2;
+  const rows = 3;
+  const perPage = columns * rows;
+  const gapX = 12;
+  const gapY = 14;
+  const labelHeight = 30;
+  const cellWidth = (contentWidth() - gapX) / columns;
+  const availableHeight = y - minY();
+  const cellHeight = (availableHeight - gapY * (rows - 1)) / rows;
+  const maxImageHeight = Math.max(90, cellHeight - labelHeight);
+
+  for (let index = 0; index < photos.length; index += 1) {
+    const slot = index % perPage;
+    if (index > 0 && slot === 0) {
+      const next = addStandardPage(pdf, "Additional Photos continued", fonts);
+      page = next.page;
+      y = next.y;
+    }
+
+    const col = slot % columns;
+    const row = Math.floor(slot / columns);
+    const x = pdfStyle.margin + col * (cellWidth + gapX);
+    const cellTop = y - row * (cellHeight + gapY);
+    const photo = photos[index];
+
+    page.drawRectangle({
+      x: x - 4,
+      y: cellTop - cellHeight,
+      width: cellWidth + 8,
+      height: cellHeight,
+      borderColor: pdfStyle.ruleColor,
+      borderWidth: 0.8
+    });
+
+    await drawUploadedImage(pdf, page, photo.upload, x, cellTop - 10, cellWidth, maxImageHeight);
+    const caption = photo.description || `Photo ${index + 1}`;
+    const captionY = cellTop - maxImageHeight - 20;
+    const captionResult = drawWrappedText(page, caption, x, captionY, {
+      size: 9,
+      maxWidth: cellWidth,
+      lineHeight: 11,
+      font: bodyFont,
+      color: pdfStyle.bodyColor,
+      minLinesOnPage: 1
+    });
+    if (captionResult.needsNewPage) {
+      page.drawText(caption.slice(0, 80), { x, y: captionY, size: 9, font: bodyFont, color: pdfStyle.bodyColor, maxWidth: cellWidth });
+    }
+  }
+
+  return page;
+}
+
+function drawCompactField(
+  page: PdfPage,
+  label: string,
+  value: string,
+  x: number,
+  y: number,
+  width: number,
+  fonts: Pick<PdfFonts, "headingFont" | "bodyFont">
+) {
+  const { headingFont, bodyFont } = fonts;
+  page.drawText(label, { x, y, size: 8.5, font: headingFont, color: pdfStyle.headingColor });
+  const result = drawWrappedText(page, value || "Not provided", x, y - 12, {
+    size: 9.5,
+    maxWidth: width,
+    lineHeight: 12,
+    font: bodyFont,
+    minLinesOnPage: 1
+  });
+  return result.y;
+}
+
+function drawCompactParagraph(
+  pdf: PDFDocument,
+  page: PdfPage,
+  y: number,
+  label: string,
+  value: string,
+  fonts: Pick<PdfFonts, "headingFont" | "bodyFont">,
+  continuationTitle: string
+) {
+  ({ page, y } = ensureSpace(pdf, page, y, 42, continuationTitle, fonts));
+  page.drawText(label, { x: pdfStyle.margin, y, size: 10.5, font: fonts.headingFont, color: pdfStyle.headingColor });
+  y -= 14;
+  const result = drawWrappedText(page, value || "Not provided", pdfStyle.margin, y, {
+    size: 9.5,
+    maxWidth: contentWidth(),
+    lineHeight: 13,
+    font: fonts.bodyFont
+  });
+  return { page, y: result.y - 8 };
+}
+
+function drawCompactBulletList(
+  pdf: PDFDocument,
+  page: PdfPage,
+  y: number,
+  label: string,
+  items: string[],
+  fonts: Pick<PdfFonts, "headingFont" | "bodyFont">,
+  continuationTitle: string
+) {
+  if (items.length === 0) return { page, y };
+  ({ page, y } = ensureSpace(pdf, page, y, 42, continuationTitle, fonts));
+  page.drawText(label, { x: pdfStyle.margin, y, size: 10.5, font: fonts.headingFont, color: pdfStyle.headingColor });
+  y -= 15;
+
+  for (const item of items) {
+    ({ page, y } = ensureSpace(pdf, page, y, 28, continuationTitle, fonts));
+    page.drawText("-", { x: pdfStyle.margin, y, size: 9.5, font: fonts.bodyFont, color: pdfStyle.bodyColor });
+    const result = drawWrappedText(page, item, pdfStyle.margin + 14, y, {
+      size: 9.5,
+      maxWidth: contentWidth() - 14,
+      lineHeight: 12,
+      font: fonts.bodyFont,
+      minLinesOnPage: 1
+    });
+    y = result.y - 2;
+  }
+
+  return { page, y: y - 5 };
+}
+
+async function addSignaturePagePdf(
+  pdf: PDFDocument,
+  submission: FormSubmission,
+  fonts: PdfFonts
+) {
+  let { page, y } = addStandardPage(pdf, "Signature and Disclosure", fonts);
+  const { headingFont } = fonts;
+  const gap = 14;
+  const halfWidth = (contentWidth() - gap) / 2;
+  const cityWidth = contentWidth() * 0.5 - gap;
+  const stateWidth = contentWidth() * 0.25 - gap / 2;
+  const zipWidth = contentWidth() * 0.25 - gap / 2;
+  const continuationTitle = "Signature and Disclosure continued";
+
+  const reportTitle = valueOf(submission, "reportTitle");
+  if (reportTitle) {
+    page.drawText(reportTitle, { x: pdfStyle.margin, y, size: 12, font: headingFont, color: rgb(0.1, 0.28, 0.6), maxWidth: contentWidth() });
+    y -= 22;
+  }
+
+  ({ page, y } = ensureSpace(pdf, page, y, 66, continuationTitle, fonts));
+  const addressY = drawCompactField(page, "Subject Property Address", valueOf(submission, "propertyAddress"), pdfStyle.margin, y, halfWidth, fonts);
+  const unitY = drawCompactField(page, "Unit #", valueOf(submission, "propertyUnit"), pdfStyle.margin + halfWidth + gap, y, halfWidth, fonts);
+  y = Math.min(addressY, unitY) - 10;
+
+  ({ page, y } = ensureSpace(pdf, page, y, 42, continuationTitle, fonts));
+  const cityY = drawCompactField(page, "City", valueOf(submission, "propertyCity"), pdfStyle.margin, y, cityWidth, fonts);
+  const stateY = drawCompactField(page, "State", valueOf(submission, "propertyState"), pdfStyle.margin + cityWidth + gap, y, stateWidth, fonts);
+  const zipY = drawCompactField(page, "ZIP Code", valueOf(submission, "propertyZip"), pdfStyle.margin + cityWidth + stateWidth + gap * 1.5, y, zipWidth, fonts);
+  y = Math.min(cityY, stateY, zipY) - 10;
+
+  ({ page, y } = ensureSpace(pdf, page, y, 42, continuationTitle, fonts));
+  const dateY = drawCompactField(page, "Effective Date", valueOf(submission, "effectiveDate"), pdfStyle.margin, y, halfWidth, fonts);
+  const userY = drawCompactField(page, "Intended User", valueOf(submission, "intendedUser"), pdfStyle.margin + halfWidth + gap, y, halfWidth, fonts);
+  y = Math.min(dateY, userY) - 10;
+
+  ({ page, y } = drawCompactParagraph(pdf, page, y, "Intended Use / Purpose", valueOf(submission, "purpose"), fonts, continuationTitle));
+  ({ page, y } = drawCompactBulletList(pdf, page, y, "Assumptions", getRepeaterTextItems(submission, "assumptions"), fonts, continuationTitle));
+  ({ page, y } = drawCompactBulletList(pdf, page, y, "Limiting Conditions", getRepeaterTextItems(submission, "limitingConditions"), fonts, continuationTitle));
+  ({ page, y } = drawCompactBulletList(pdf, page, y, "Additional Disclosures", getRepeaterTextItems(submission, "additionalDisclosures"), fonts, continuationTitle));
+  ({ page, y } = drawCompactParagraph(pdf, page, y, "State-Specific Disclosure", valueOf(submission, "stateDisclosureText"), fonts, continuationTitle));
+  ({ page, y } = drawCompactParagraph(pdf, page, y, "Certification Statement", valueOf(submission, "certificationText"), fonts, continuationTitle));
+
+  const agentInterest = [valueOf(submission, "agentInterest"), valueOf(submission, "agentInterestNote")].filter(Boolean).join(" - ");
+  if (agentInterest) ({ page, y } = drawCompactParagraph(pdf, page, y, "Agent Interest Disclosure", agentInterest, fonts, continuationTitle));
+
+  const acknowledgements = [valueOf(submission, "mlsCompliant"), valueOf(submission, "nonLending")].filter(Boolean);
+  ({ page, y } = drawCompactBulletList(pdf, page, y, "Compliance Acknowledgements", acknowledgements, fonts, continuationTitle));
+
+  ({ page, y } = ensureSpace(pdf, page, y, 92, continuationTitle, fonts));
+  page.drawText("Signature", { x: pdfStyle.margin, y, size: 10.5, font: headingFont, color: pdfStyle.headingColor });
+  y -= 12;
+  const signatureHeight = await drawUploadedImage(pdf, page, parseUploadValue(valueOf(submission, "signatureImage")), pdfStyle.margin, y, 150, 42);
+  if (signatureHeight) y -= signatureHeight + 7;
+  page.drawLine({ start: { x: pdfStyle.margin, y }, end: { x: pdfStyle.margin + 190, y }, thickness: 0.8, color: pdfStyle.ruleColor });
+  y -= 16;
+  drawCompactField(page, "Licensee Full Name", valueOf(submission, "licenseeName"), pdfStyle.margin, y, 190, fonts);
+  drawCompactField(page, "License Number", valueOf(submission, "licenseNumber"), pdfStyle.margin + 206, y, 120, fonts);
+  drawCompactField(page, "Signature Date", valueOf(submission, "signatureDate"), pdfStyle.margin + 342, y, 120, fonts);
+
+  return page;
+}
+
+async function addFloorplansSketchesPdf(
+  pdf: PDFDocument,
+  submission: FormSubmission,
+  fonts: PdfFonts
+) {
+  const { bodyFont } = fonts;
+  let { page, y } = addStandardPage(pdf, "Floorplans / Sketches", fonts);
+  const gap = 14;
+  const halfWidth = (contentWidth() - gap) / 2;
+  const cityWidth = contentWidth() * 0.5 - gap;
+  const stateWidth = contentWidth() * 0.25 - gap / 2;
+  const zipWidth = contentWidth() * 0.25 - gap / 2;
+
+  ({ page, y } = ensureSpace(pdf, page, y, 66, "Floorplans / Sketches continued", fonts));
+  const addressY = drawCompactField(page, "Subject Property Address", valueOf(submission, "propertyAddress"), pdfStyle.margin, y, halfWidth, fonts);
+  const unitY = drawCompactField(page, "Unit #", valueOf(submission, "propertyUnit"), pdfStyle.margin + halfWidth + gap, y, halfWidth, fonts);
+  y = Math.min(addressY, unitY) - 10;
+
+  ({ page, y } = ensureSpace(pdf, page, y, 42, "Floorplans / Sketches continued", fonts));
+  const cityY = drawCompactField(page, "City", valueOf(submission, "propertyCity"), pdfStyle.margin, y, cityWidth, fonts);
+  const stateY = drawCompactField(page, "State", valueOf(submission, "propertyState"), pdfStyle.margin + cityWidth + gap, y, stateWidth, fonts);
+  const zipY = drawCompactField(page, "ZIP Code", valueOf(submission, "propertyZip"), pdfStyle.margin + cityWidth + stateWidth + gap * 1.5, y, zipWidth, fonts);
+  y = Math.min(cityY, stateY, zipY) - 18;
+
+  const photos = getRepeaterItemIds(submission, "floorPlanList")
+    .map((itemId) => ({
+      upload: parseUploadValue(submission.values[`floorPlanList_${itemId}_photo`]),
+      caption: valueOf(submission, `floorPlanList_${itemId}_label`) || "Floor Plan Sketch"
+    }))
+    .filter((item) => item.upload);
+
+  if (photos.length === 0) {
+    page.drawText("No floor plan sketches uploaded.", { x: pdfStyle.margin, y, size: 11, font: bodyFont, color: pdfStyle.mutedColor });
+    return page;
+  }
+
+  const columns = 2;
+  const rows = 2;
+  const perPage = columns * rows;
+  const gapX = 12;
+  const gapY = 16;
+  const labelHeight = 34;
+  const cellWidth = (contentWidth() - gapX) / columns;
+  const availableHeight = y - minY();
+  const cellHeight = (availableHeight - gapY * (rows - 1)) / rows;
+  const maxImageHeight = Math.max(140, cellHeight - labelHeight);
+
+  for (let index = 0; index < photos.length; index += 1) {
+    const slot = index % perPage;
+    if (index > 0 && slot === 0) {
+      const next = addStandardPage(pdf, "Floorplans / Sketches continued", fonts);
+      page = next.page;
+      y = next.y;
+    }
+
+    const col = slot % columns;
+    const row = Math.floor(slot / columns);
+    const x = pdfStyle.margin + col * (cellWidth + gapX);
+    const cellTop = y - row * (cellHeight + gapY);
+    const photo = photos[index];
+
+    page.drawRectangle({
+      x: x - 4,
+      y: cellTop - cellHeight,
+      width: cellWidth + 8,
+      height: cellHeight,
+      borderColor: pdfStyle.ruleColor,
+      borderWidth: 0.8
+    });
+
+    await drawUploadedImage(pdf, page, photo.upload, x, cellTop - 10, cellWidth, maxImageHeight);
+    drawWrappedText(page, photo.caption, x, cellTop - maxImageHeight - 20, {
+      size: 9,
+      maxWidth: cellWidth,
+      lineHeight: 11,
+      font: bodyFont,
+      color: pdfStyle.bodyColor,
+      minLinesOnPage: 1
+    });
+  }
+
+  return page;
+}
+
+const aerialViewImageFields = [
+  { id: "marketAreaStandard", label: "Market Area View Standard" },
+  { id: "marketAreaSatellite", label: "Market Area View Satellite" },
+  { id: "neighborhoodStandard", label: "Neighborhood View Standard" },
+  { id: "neighborhoodSatellite", label: "Neighborhood View Satellite" },
+  { id: "floodMapNeighborhood", label: "Flood Map (Neighborhood View)" },
+  { id: "platTaxMap", label: "Plat / Tax Map" },
+  { id: "zoningMapNeighborhood", label: "Zoning Map (Neighborhood View)" }
+] as const;
+
+async function addAerialViewsPdf(
+  pdf: PDFDocument,
+  submission: FormSubmission,
+  fonts: PdfFonts
+) {
+  const { bodyFont } = fonts;
+  let { page, y } = addStandardPage(pdf, "Aerial Views", fonts);
+  const subjectAddress = `${valueOf(submission, "propertyAddress")}${valueOf(submission, "propertyUnit") ? ` ${valueOf(submission, "propertyUnit")}` : ""}`.trim();
+  const subjectCityLine = `${valueOf(submission, "propertyCity")}, ${valueOf(submission, "propertyState")} ${valueOf(submission, "propertyZip")}`.replace(/^, /, "").trim();
+
+  for (const line of [subjectAddress, subjectCityLine]) {
+    if (!line) continue;
+    const result = drawWrappedText(page, line, pdfStyle.margin, y, {
+      size: pdfStyle.bodySize,
+      maxWidth: contentWidth(),
+      lineHeight: pdfStyle.bodyLineHeight,
+      font: bodyFont
+    });
+    y = result.y;
+  }
+  y -= 18;
+
+  const fieldPhotoIds = getRepeaterItemIds(submission, "fieldPhotoList");
+  const fieldPhotos = fieldPhotoIds
+    .map((itemId) => ({
+      upload: parseUploadValue(submission.values[`fieldPhotoList_${itemId}_photo`]),
+      caption: submission.values[`fieldPhotoList_${itemId}_label`]?.trim() || "Property & Field Photo"
+    }))
+    .filter((item) => item.upload);
+  const mapPhotos = aerialViewImageFields
+    .map((field) => ({
+      upload: parseUploadValue(submission.values[field.id]),
+      caption: field.label
+    }))
+    .filter((item) => item.upload);
+  const photos = [...fieldPhotos, ...mapPhotos];
+
+  if (photos.length === 0) {
+    page.drawText("No aerial photos uploaded.", { x: pdfStyle.margin, y, size: 11, font: bodyFont, color: pdfStyle.mutedColor });
+    return page;
+  }
+
+  const columns = 2;
+  const rows = 2;
+  const perPage = columns * rows;
+  const gapX = 12;
+  const gapY = 16;
+  const labelHeight = 34;
+  const cellWidth = (contentWidth() - gapX) / columns;
+  const availableHeight = y - minY();
+  const cellHeight = (availableHeight - gapY * (rows - 1)) / rows;
+  const maxImageHeight = Math.max(140, cellHeight - labelHeight);
+
+  for (let index = 0; index < photos.length; index += 1) {
+    const slot = index % perPage;
+    if (index > 0 && slot === 0) {
+      const next = addStandardPage(pdf, "Aerial Views continued", fonts);
+      page = next.page;
+      y = next.y;
+    }
+
+    const col = slot % columns;
+    const row = Math.floor(slot / columns);
+    const x = pdfStyle.margin + col * (cellWidth + gapX);
+    const cellTop = y - row * (cellHeight + gapY);
+    const photo = photos[index];
+
+    page.drawRectangle({
+      x: x - 4,
+      y: cellTop - cellHeight,
+      width: cellWidth + 8,
+      height: cellHeight,
+      borderColor: pdfStyle.ruleColor,
+      borderWidth: 0.8
+    });
+
+    await drawUploadedImage(pdf, page, photo.upload, x, cellTop - 10, cellWidth, maxImageHeight);
+    drawWrappedText(page, photo.caption, x, cellTop - maxImageHeight - 20, {
+      size: 9,
+      maxWidth: cellWidth,
+      lineHeight: 11,
+      font: bodyFont,
+      color: pdfStyle.bodyColor,
+      minLinesOnPage: 1
+    });
+  }
+
+  return page;
+}
+
 export async function createMergedReportPdf(data: AppData, project: ReportProject): Promise<GeneratedPdf> {
   const property = data.properties.find((item) => item.id === project.propertyId);
   const submissions = data.submissions.filter((item) => item.reportProjectId === project.id);
@@ -487,6 +908,22 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
         await addFrontPhotosPdf(pdf, submission, { headingFont, bodyFont, smallFont });
         continue;
       }
+      if (schema.id === "additional-photos" && submission) {
+        await addAdditionalPhotosPdf(pdf, submission, { headingFont, bodyFont, smallFont });
+        continue;
+      }
+      if (schema.id === "signature-page" && submission) {
+        await addSignaturePagePdf(pdf, submission, { headingFont, bodyFont, smallFont });
+        continue;
+      }
+      if (schema.id === "floorplans-sketches" && submission) {
+        await addFloorplansSketchesPdf(pdf, submission, { headingFont, bodyFont, smallFont });
+        continue;
+      }
+      if (schema.id === "aerial-views" && submission) {
+        await addAerialViewsPdf(pdf, submission, { headingFont, bodyFont, smallFont });
+        continue;
+      }
       page = addPage(schema.title);
       page.drawText(schema.category, { x: pdfStyle.margin, y: 696, size: 11, font: headingFont, color: rgb(0.1, 0.28, 0.6) });
       const description = drawWrappedText(page, form?.description ?? schema.description, pdfStyle.margin, 676, { size: 9, maxWidth: contentWidth(), lineHeight: 13, font: smallFont, color: pdfStyle.mutedColor });
@@ -498,6 +935,7 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
       }
 
       for (const field of schema.fields) {
+        if (!isFieldVisibleForSubmission(field, submission)) continue;
         const result = await drawLocalFormField(pdf, page, field, submission, formY, { headingFont, bodyFont }, `${schema.title} continued`);
         page = result.page;
         formY = result.y;
@@ -532,6 +970,7 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
     }
 
     for (const field of section.fields) {
+      if (!isFieldVisibleForSubmission(field, submission)) continue;
       const result = await drawLocalFormField(pdf, page, field, submission, y, { headingFont, bodyFont }, `${section.title} continued`);
       page = result.page;
       y = result.y;
@@ -566,6 +1005,14 @@ export async function createLocalFormPdf(data: AppData, project: ReportProject, 
     await addCoverPagePdf(pdf, submission, { headingFont, bodyFont, smallFont });
   } else if (schema?.id === "front-photos" && submission) {
     await addFrontPhotosPdf(pdf, submission, { headingFont, bodyFont, smallFont });
+  } else if (schema?.id === "additional-photos" && submission) {
+    await addAdditionalPhotosPdf(pdf, submission, { headingFont, bodyFont, smallFont });
+  } else if (schema?.id === "signature-page" && submission) {
+    await addSignaturePagePdf(pdf, submission, { headingFont, bodyFont, smallFont });
+  } else if (schema?.id === "floorplans-sketches" && submission) {
+    await addFloorplansSketchesPdf(pdf, submission, { headingFont, bodyFont, smallFont });
+  } else if (schema?.id === "aerial-views" && submission) {
+    await addAerialViewsPdf(pdf, submission, { headingFont, bodyFont, smallFont });
   } else {
     let { page, y } = addStandardPage(pdf, schema?.title ?? formId, { headingFont });
 
@@ -573,6 +1020,7 @@ export async function createLocalFormPdf(data: AppData, project: ReportProject, 
       page.drawText("No local submission saved for this form.", { x: pdfStyle.margin, y, size: 11, font: smallFont, color: rgb(0.56, 0.36, 0.1) });
     } else {
       for (const field of schema.fields) {
+        if (!isFieldVisibleForSubmission(field, submission)) continue;
         const result = await drawLocalFormField(pdf, page, field, submission, y, { headingFont, bodyFont }, `${schema.title} continued`);
         page = result.page;
         y = result.y;

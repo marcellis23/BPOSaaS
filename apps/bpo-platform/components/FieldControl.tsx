@@ -25,6 +25,10 @@ export function FieldControl({ field, value = "" }: FieldControlProps) {
     return <RepeaterControl field={field} value={value} />;
   }
 
+  if (field.kind === "checkboxes") {
+    return <CheckboxesControl field={field} value={value} />;
+  }
+
   return (
     <label className="block">
       <span className="text-sm font-medium text-slate-800">
@@ -166,4 +170,40 @@ function parseUploadValue(value: string): { name: string } | null {
   } catch {
     return null;
   }
+}
+
+function CheckboxesControl({ field, value = "" }: { field: FormField; value?: string }) {
+  const [selected, setSelected] = useState<string[]>(() =>
+    value ? value.split(",").map((s) => s.trim()).filter(Boolean) : []
+  );
+
+  const toggle = (option: string) => {
+    setSelected((prev) =>
+      prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option]
+    );
+  };
+
+  return (
+    <fieldset className="block">
+      <legend className="text-sm font-medium text-slate-800">
+        {field.label}
+        {field.required ? <span className="text-red-600"> *</span> : null}
+      </legend>
+      <div className="mt-3 space-y-3">
+        {field.options?.map((option) => (
+          <label key={option} className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={selected.includes(option)}
+              onChange={() => toggle(option)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600"
+            />
+            <span className="text-sm leading-none text-slate-700">{option}</span>
+          </label>
+        ))}
+      </div>
+      {/* Keep a hidden input so the server action saves the values seamlessly */}
+      <input type="hidden" name={field.id} value={selected.join(", ")} />
+    </fieldset>
+  );
 }

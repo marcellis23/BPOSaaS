@@ -638,3 +638,41 @@ At the beginning of each new session, read this file before making changes. At t
 ### Next Notes
 - Browser-test creating a report with a new client, then creating a second report using the saved client picker.
 - Consider adding client management/search as the client list grows.
+
+## 2026-05-18 - PDF Standards and Native Webform Migration Batch
+
+### Changes
+- Standardized generated PDF styling in `pdf.ts` with consistent margins, typography hierarchy, wrapping, pagination helpers, and page-number footers.
+- Fixed the Cover Page PDF runtime error caused by an undefined `headingFont` reference.
+- Updated photo-heavy PDF outputs:
+  - Additional Photos now prints up to 6 photos per page.
+  - Aerial Views now prints up to 4 photos per page.
+  - Floorplans / Sketches now prints compact property header rows and up to 4 images per page.
+- Updated Signature and Disclosure PDF output with compact address rows, bullet-style Assumptions / Limiting Conditions / Additional Disclosures, and a smaller signature image.
+- Added a guided-builder Remove PDF action and compact remove button so agents can replace previously uploaded PDFs.
+- Added `LocalFormFields.tsx` to support conditional form sections and layout spans on local report forms.
+- Extended form field support for `layoutSpan`, `fullWidth`, `visibleWhen`, and checkbox groups, while preserving repeater save/reload behavior.
+- Migrated and expanded native webforms from their source markdown guides:
+  - Signature and Disclosure
+  - Vacant Land Site Data
+  - PCR Exterior
+  - PCR Interior / Full Inspection
+  - PCR Summary
+  - Construction Cost Estimate / Lot Development
+  - Repair Estimate / Contributory Value Assessment
+- Added HOA / Condo show-hide behavior for Vacant Land Site Data sections and completed requested layout refinements for property, site, environmental, association, and condition fields.
+
+### Reasons
+- PDF exports now need to be consistently professional, legible, and safe from text/image cutoff across multiple form types.
+- Agents need native guided-builder forms to capture the full source form data instead of relying on uploaded PDFs.
+- Conditional HOA / Condo sections reduce clutter for reports where association and common-area details do not apply.
+- Uploaded PDFs sometimes need replacement, so the builder needs a direct remove path before re-upload.
+
+### Verification
+- Ran `npm run lint`.
+- Ran targeted TypeScript checks against touched form/PDF files; no matching errors were reported for the edited form modules.
+- Full typecheck remains blocked by the existing public-page `getPublicPage()` / `InfoPage | undefined` typing issue noted in earlier sessions.
+
+### Next Notes
+- Browser-test the newly migrated PCR, construction cost, and repair estimate forms with representative sample entries.
+- Continue cleaning up the existing public-page typecheck blocker so full `npm run typecheck` can become a reliable pre-commit check again.

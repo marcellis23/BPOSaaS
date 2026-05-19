@@ -572,6 +572,35 @@ export async function uploadFormPdfAction(formData: FormData) {
   revalidatePath(`/reports/${projectId}`);
 }
 
+export async function removeUploadedFormPdfAction(formData: FormData) {
+  const user = await requireUser();
+  const projectId = requireString(formData, "projectId");
+  const formId = requireString(formData, "formId");
+
+  await updateData(async (data) => {
+    const project = data.projects.find((item) => item.id === projectId && item.organizationId === user.organizationId);
+    if (!project) throw new Error("Report not found");
+    const progress = data.formProgress.find((item) => item.reportProjectId === projectId && item.formId === formId);
+    if (!progress) throw new Error("Form progress not found");
+
+    if (progress.uploadedPdfPath) {
+      try {
+        await fs.unlink(progress.uploadedPdfPath);
+      } catch {
+        // The upload metadata should still be cleared if the file is already gone.
+      }
+    }
+
+    progress.uploadedPdfPath = undefined;
+    progress.uploadedPdfName = undefined;
+    progress.status = progress.status === "pdf_uploaded" ? "not_started" : progress.status;
+    progress.updatedAt = nowIso();
+    project.updatedAt = nowIso();
+  });
+
+  revalidatePath(`/reports/${projectId}`);
+}
+
 export async function saveSectionAction(formData: FormData) {
   const user = await requireUser();
   const projectId = requireString(formData, "projectId");

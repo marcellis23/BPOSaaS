@@ -9,7 +9,7 @@ export type ReportType =
   | "Valuation Support Report"
   | "Investor Due Diligence Report";
 
-export type FieldKind = "text" | "textarea" | "select" | "number" | "date" | "email" | "image" | "divider" | "repeater";
+export type FieldKind = "text" | "textarea" | "select" | "number" | "date" | "email" | "image" | "divider" | "repeater" | "checkboxes";
 
 export type AssignmentIntent =
   | "seller_due_diligence"
@@ -80,36 +80,13 @@ export interface PropertyRecord {
   propertyType?: string;
 }
 
-export interface ClientRecord {
-  id: string;
-  organizationId: string;
-  company: string;
-  contact: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  phone?: string;
-  email?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface ReportProject {
   id: string;
   organizationId: string;
   ownerUserId: string;
   propertyId: string;
   title: string;
-  clientId?: string;
   clientName: string;
-  clientCompany?: string;
-  clientAddress?: string;
-  clientCity?: string;
-  clientState?: string;
-  clientZip?: string;
-  clientPhone?: string;
-  clientEmail?: string;
   reportType: ReportType;
   status: ReportStatus;
   selectedSectionIds: string[];
@@ -143,6 +120,9 @@ export interface FormField {
   minItems?: number;
   addButtonLabel?: string;
   fields?: FormField[];
+  fullWidth?: boolean;
+  layoutSpan?: 1 | 2 | 3 | 4;
+  visibleWhen?: { fieldId: string; values: string[] };
 }
 
 export interface FormSubmission {
@@ -178,7 +158,6 @@ export interface AppData {
   users: User[];
   organizations: Organization[];
   memberships: Membership[];
-  clients: ClientRecord[];
   properties: PropertyRecord[];
   projects: ReportProject[];
   submissions: FormSubmission[];

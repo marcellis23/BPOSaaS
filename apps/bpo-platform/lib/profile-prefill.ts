@@ -5,6 +5,7 @@ export function getProfileFieldPrefill(field: FormField, user: User) {
     agentName: user.name,
     preparedBy: user.name,
     signatureName: user.name,
+    licenseeName: user.name,
     agentTitle: user.title,
     agentPhone: user.phone,
     agentEmail: user.email,
