@@ -17,9 +17,9 @@ export const vacantLandSiteDataForm: LocalFormDefinition = {
     { id: "lotParcelNumber", label: "Lot / Parcel #", kind: "text", placeholder: "Lot/Parcel" },
     { id: "propertyAddress", label: "Property Address", kind: "text", required: true, placeholder: "123 Main St" },
     { id: "propertyUnit", label: "Unit #", kind: "text", placeholder: "Unit 2B" },
-    { id: "propertyCity", label: "City / Town", kind: "text", required: true, layoutSpan: 2 },
-    { id: "propertyState", label: "State", kind: "select", required: true, options: stateOptions, layoutSpan: 1 },
-    { id: "propertyZip", label: "ZIP Code", kind: "text", required: true, placeholder: "19104", layoutSpan: 1 },
+    { id: "propertyCity", label: "City / Town", kind: "text", required: true },
+    { id: "propertyState", label: "State", kind: "select", required: true, options: stateOptions },
+    { id: "propertyZip", label: "ZIP Code", kind: "text", required: true, placeholder: "19104" },
     { id: "county", label: "County", kind: "text" },
     { id: "schoolDistrict", label: "School District", kind: "text" },
     {

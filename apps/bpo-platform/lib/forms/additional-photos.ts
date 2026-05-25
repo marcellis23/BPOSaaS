@@ -23,7 +23,13 @@ export const additionalPhotosForm: LocalFormDefinition = {
         "Fourth Floor", "Additional Exterior", "Utilities/Mechanicals", "Other"
       ]
     },
-    { id: "photoAreaOther", label: "If Other, please describe", kind: "text", placeholder: "e.g., Detached Garage" },
+    {
+      id: "photoAreaOther",
+      label: "If Other, please describe",
+      kind: "text",
+      placeholder: "e.g., Detached Garage",
+      visibleWhen: { fieldId: "photoAreaSelect", values: ["Other"] }
+    },
     {
       id: "photoList",
       label: "Photos",

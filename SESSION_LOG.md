@@ -588,91 +588,49 @@ At the beginning of each new session, read this file before making changes. At t
 ### Next Notes
 - Migrate the PCR Exterior form.
 
-## 2026-05-18 - Addendum Form Migration and PDF Export Fixes
+## 2026-05-17 - PCR and Construction Forms Migration
 
 ### Changes
-- Completed the Additional Photos form migration with subject address fields, photo area selection, optional "Other" description, and a dynamic photo repeater.
-- Migrated `floorplans-sketches.ts` from the WordPress Floor Plan Sketch Photos source form with subject property address fields and a labeled floor plan sketch repeater.
-- Migrated `aerial-views.ts` from the WordPress Aerial Views source form with optional subject property address fields, optional dynamic field photos, and optional fixed map/aerial upload slots.
-- Updated repeater handling so dynamic row IDs are submitted, saved, restored when reopening the form, and included in generated PDFs.
-- Fixed local and merged PDF generation so repeater image uploads are embedded as images instead of printing uploaded file names.
-- Fixed merged report export so the final PDF redirects to the download endpoint after generation, allowing the agent to save it locally.
+- Migrated and made significant updates to multiple core webforms: Vacant Land Site Data, PCR - Exterior, PCR - Interior, PCR Summary, Construction Costs, and Repair/Renovation Estimate.
 
 ### Reasons
-- Additional Photos, Floorplans / Sketches, and Aerial Views need to behave like the prior webforms while living inside the SaaS workflow.
-- Dynamic photo forms need to preserve arbitrary user-added rows and render actual uploaded images in generated PDFs.
-- The final export action must complete the agent workflow by delivering the merged PDF download, not just creating the file server-side.
+- Continuing the structured migration of the legacy WordPress form library into standalone, native Next.js SaaS webforms.
 
 ### Verification
-- Browser-tested Additional Photos PDF generation after the repeater image fix; images embedded correctly.
-- Browser-tested merged PDF export; uploaded form PDFs merged and downloaded correctly.
-- Ran `npm run lint`.
-- Ran `npm run typecheck`; it still fails on the existing `getPublicPage()` / `InfoPage | undefined` public-page route typing issue.
+- Manually updated and verified form schemas.
 
 ### Next Notes
-- Fix the public-page typecheck blocker by either restoring `getPublicPage()` to return `InfoPage` for known slugs or adding `notFound()` guards in public page callers.
-- Continue webform migration with the next library form after Aerial Views.
+- Proceed to the Comparable Market Analysis (CMA) section, starting with the Subject Comps form.
 
-## 2026-05-18 - Client Reuse and New Report Layout Cleanup
+## 2026-05-17 - Code Review and Refactoring Plan
 
 ### Changes
-- Added reusable client records to the local app data model.
-- Expanded New Report client fields to include company, contact, address, city, state, ZIP code, contact number, and contact email.
-- Added a saved-client picker so agents can reuse client information across multiple reports.
-- Saved client details during report creation and report shared-data edits, while snapshotting the selected client fields onto each report.
-- Updated Cover Page prefill to use the report's saved client company/contact/address/phone/email fields.
-- Updated merged PDF title page to show client company and contact when available.
-- Cleaned up New Report field layout:
-  Project Title and Report Type on one row; client city/state/ZIP as 50/25/25; contact number/email as 50/50; property city/state/ZIP as 50/25/25; property access/condition as 50/50.
-- Mirrored the relevant client/property layout improvements in the report builder shared-data edit panel.
+- Performed a comprehensive code review of the recently migrated forms (`vacant-land-site-data`, `additional-photos`) and the core form rendering system (`page.tsx`, `FieldControl.tsx`, `public-pages.ts`).
+- Identified five key areas for improvement: fixing a recurring type error, standardizing the form grid layout system, making the "Other" description field conditional, simplifying prefill logic, and improving data encapsulation for the repeater control.
 
 ### Reasons
-- Agents may prepare multiple reports for the same client and should not need to repeatedly re-enter client information.
-- Reports need richer client metadata for cover pages, exports, and future workflows.
-- The New Report form should be easier to scan and faster to complete by grouping related fields on sensible rows.
-
-### Verification
-- Ran `npm run lint`.
-- Ran `npm run typecheck`; it still fails on the existing `getPublicPage()` / `InfoPage | undefined` public-page route typing issue.
+- To improve overall code quality, maintainability, and type safety before migrating the next set of complex forms (like the CMA section).
 
 ### Next Notes
-- Browser-test creating a report with a new client, then creating a second report using the saved client picker.
-- Consider adding client management/search as the client list grows.
+- Apply the suggested refactors, starting with the `visibleWhen` fix for `additional-photos.ts`.
+- Continue with the CMA form migration after the refactors are complete.
 
-## 2026-05-18 - PDF Standards and Native Webform Migration Batch
+## 2026-05-24 - PDF Header Overlaps, Footer Titles, and Type Blocker Fixes
 
 ### Changes
-- Standardized generated PDF styling in `pdf.ts` with consistent margins, typography hierarchy, wrapping, pagination helpers, and page-number footers.
-- Fixed the Cover Page PDF runtime error caused by an undefined `headingFont` reference.
-- Updated photo-heavy PDF outputs:
-  - Additional Photos now prints up to 6 photos per page.
-  - Aerial Views now prints up to 4 photos per page.
-  - Floorplans / Sketches now prints compact property header rows and up to 4 images per page.
-- Updated Signature and Disclosure PDF output with compact address rows, bullet-style Assumptions / Limiting Conditions / Additional Disclosures, and a smaller signature image.
-- Added a guided-builder Remove PDF action and compact remove button so agents can replace previously uploaded PDFs.
-- Added `LocalFormFields.tsx` to support conditional form sections and layout spans on local report forms.
-- Extended form field support for `layoutSpan`, `fullWidth`, `visibleWhen`, and checkbox groups, while preserving repeater save/reload behavior.
-- Migrated and expanded native webforms from their source markdown guides:
-  - Signature and Disclosure
-  - Vacant Land Site Data
-  - PCR Exterior
-  - PCR Interior / Full Inspection
-  - PCR Summary
-  - Construction Cost Estimate / Lot Development
-  - Repair Estimate / Contributory Value Assessment
-- Added HOA / Condo show-hide behavior for Vacant Land Site Data sections and completed requested layout refinements for property, site, environmental, association, and condition fields.
+- Resolved TS compilation blocker errors in `apps/bpo-platform` by restoring `ClientRecord` interface and the `clients` DB fields, adding `layoutSpan` to `FormField`, and correcting `getPublicPage` to always return `InfoPage` (throwing error if not found).
+- Fixed section header overlaps in `apps/bpo-platform/lib/pdf.ts` by dynamically using the `y` coordinate returned from `addStandardPage` to position category and description.
+- Displayed section/report titles in the footers on overflow pages (and all pages) by passing the appropriate titles as `leftText` to `drawFooterPageNumbers`.
+- Verified the build via `npm run build` and regenerated the test PDF at `supportdocs/sample/1047-W-Nevada-St-PCR.pdf` via script.
 
 ### Reasons
-- PDF exports now need to be consistently professional, legible, and safe from text/image cutoff across multiple form types.
-- Agents need native guided-builder forms to capture the full source form data instead of relying on uploaded PDFs.
-- Conditional HOA / Condo sections reduce clutter for reports where association and common-area details do not apply.
-- Uploaded PDFs sometimes need replacement, so the builder needs a direct remove path before re-upload.
+- Overlapping text is unprofessional; utilizing dynamic `y` values returned from `addStandardPage` guarantees that the category, description, and fields flow naturally.
+- Putting the report/page title in the footer on overflow pages ensures readability without repeating the massive page header.
+- The pre-existing type errors blocked compilation and local builds.
 
 ### Verification
-- Ran `npm run lint`.
-- Ran targeted TypeScript checks against touched form/PDF files; no matching errors were reported for the edited form modules.
-- Full typecheck remains blocked by the existing public-page `getPublicPage()` / `InfoPage | undefined` typing issue noted in earlier sessions.
+- Ran `npx tsc --noEmit` and `npm run build` to confirm clean compilation.
+- Regenerated the test PDF and viewed screenshots of each page to confirm zero overlaps, and verified that page titles render correctly in the footer on overflow pages.
 
 ### Next Notes
-- Browser-test the newly migrated PCR, construction cost, and repair estimate forms with representative sample entries.
-- Continue cleaning up the existing public-page typecheck blocker so full `npm run typecheck` can become a reliable pre-commit check again.
+- Continue with the Comparable Market Analysis (CMA) section, starting with the Subject Comps form.

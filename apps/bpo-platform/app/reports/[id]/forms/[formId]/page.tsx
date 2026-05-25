@@ -130,10 +130,22 @@ export default async function LocalReportFormPage({
   const address = property
     ? `${property.address}${property.unit ? ` ${property.unit}` : ""}, ${property.city}, ${property.state} ${property.zip}`
     : "Property details not saved";
+
+  const getRepeaterValue = (fieldId: string) => {
+    if (!submission?.values) return "{}";
+    const repeaterValues = Object.entries(submission.values).reduce((acc, [key, value]) => {
+      if (key.startsWith(fieldId)) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as Record<string, string>);
+    return JSON.stringify(repeaterValues);
+  };
+
   const fields = schema.fields.map((field) => ({
     field,
     sectionTitle: schema.id === "cover-page" ? getCoverPageSectionTitle(field.id) : undefined,
-    value: field.kind === "repeater" ? JSON.stringify(submission?.values ?? {}) : getFieldValue(schema.id, field, project, user, property, submission?.values[field.id])
+    value: field.kind === "repeater" ? getRepeaterValue(field.id) : getFieldValue(schema.id, field, project, user, property, submission?.values[field.id])
   }));
 
   return (

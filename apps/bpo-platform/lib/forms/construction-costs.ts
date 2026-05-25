@@ -90,41 +90,15 @@ export const constructionCostsForm: LocalFormDefinition = {
     },
     { id: "totalCost", label: "Total Estimated Development Cost", kind: "number", required: true, placeholder: "0.00" },
 
-    { id: "currentValueDivider", label: "Estimated Current Value - Comparable Evidence", kind: "divider", placeholder: "Add 1-5 references supporting the subject's current-condition value." },
-    {
-      id: "currentComps",
-      label: "Current Condition Comparable References",
-      kind: "repeater",
-      addButtonLabel: "Add Current Comp",
-      fields: [
-        { id: "address", label: "Address / Development Name", kind: "text" },
-        { id: "status", label: "Status", kind: "select", options: ["Sold", "Active", "Pending"] },
-        { id: "price", label: "Price", kind: "number" },
-        { id: "date", label: "Date", kind: "date" },
-        { id: "notes", label: "Notes", kind: "textarea", placeholder: "Beds/baths/sf, finish, distance, similarity, condition adjustments." }
-      ]
-    },
+    { id: "currentValueDivider", label: "Estimated Current Value - Comparable Evidence", kind: "divider", placeholder: "Enter estimated current value, data sources, and justification supporting the subject's current-condition value." },
     { id: "estimatedCurrentValue", label: "Estimated Current Value ($)", kind: "number", placeholder: "125000" },
     { id: "marketSources", label: "Data Sources / Notes", kind: "text", placeholder: "Bright MLS, public records, builder bid letters, etc." },
-    { id: "estimatedCurrentJustification", label: "Justification Summary", kind: "textarea", placeholder: "Explain how comps support your current-condition value." },
+    { id: "estimatedCurrentJustification", label: "Justification Summary", kind: "textarea", placeholder: "Explain how sources/market data support your current-condition value." },
 
-    { id: "afterCompletionDivider", label: "Estimated After Completion Value - Comparable Evidence", kind: "divider", placeholder: "Add 1-5 references supporting after-completion value for the proposed plan." },
-    {
-      id: "proposedComps",
-      label: "Proposed Condition Comparable References",
-      kind: "repeater",
-      addButtonLabel: "Add Proposed Comp",
-      fields: [
-        { id: "address", label: "Address / Development Name", kind: "text" },
-        { id: "status", label: "Status", kind: "select", options: ["Sold", "Active", "Pending"] },
-        { id: "price", label: "Price", kind: "number" },
-        { id: "date", label: "Date", kind: "date" },
-        { id: "notes", label: "Notes", kind: "textarea", placeholder: "Beds/baths/sf, finish, age, distance, similarity, location/time adjustments." }
-      ]
-    },
+    { id: "afterCompletionDivider", label: "Estimated After Completion Value - Comparable Evidence", kind: "divider", placeholder: "Enter estimated after-completion value, data sources, and justification supporting the proposed plan." },
     { id: "estimatedAfterValue", label: "Estimated After Completion Value ($)", kind: "number", placeholder: "375000" },
     { id: "marketSourcesProposed", label: "Data Sources / Notes", kind: "text", placeholder: "Bright MLS, public records, builder bid letters, etc." },
-    { id: "estimatedAfterJustification", label: "Justification Summary", kind: "textarea", placeholder: "Explain how comps support your after-completion value." },
+    { id: "estimatedAfterJustification", label: "Justification Summary", kind: "textarea", placeholder: "Explain how sources/market data support your after-completion value." },
 
     { id: "feasibilityDivider", label: "Feasibility Inputs", kind: "divider", placeholder: "Enter current and after-completion values to model ROI and project contribution." },
     { id: "valueCurrent", label: "Current Lot Value ($)", kind: "number", placeholder: "0.00" },
