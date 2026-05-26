@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FormField } from "../lib/types";
 
 interface FieldControlProps {
@@ -11,6 +11,30 @@ interface FieldControlProps {
 export function FieldControl({ field, value = "" }: FieldControlProps) {
   const baseClass = "mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
   const existingUpload = field.kind === "image" && value ? parseUploadValue(value) : null;
+  const [selectedFileUrl, setSelectedFileUrl] = useState<string | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (selectedFileUrl) {
+      URL.revokeObjectURL(selectedFileUrl);
+    }
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setSelectedFileUrl(url);
+    } else {
+      setSelectedFileUrl(null);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (selectedFileUrl) {
+        URL.revokeObjectURL(selectedFileUrl);
+      }
+    };
+  }, [selectedFileUrl]);
+
+  const imageUrl = selectedFileUrl || (existingUpload?.filePath ? getUploadApiUrl(existingUpload.filePath) : null);
 
   if (field.kind === "divider") {
     return (
@@ -47,15 +71,42 @@ export function FieldControl({ field, value = "" }: FieldControlProps) {
           ))}
         </select>
       ) : field.kind === "image" ? (
-        <>
-          <input name={field.id} required={field.required && !existingUpload} type="file" accept="image/png,image/jpeg,image/jpg" className={baseClass} />
-          {existingUpload ? (
-            <span className="mt-2 block rounded-md bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
-              Current image: {existingUpload.name}
-            </span>
+        <div className="space-y-2">
+          <input
+            name={field.id}
+            required={field.required && !existingUpload}
+            type="file"
+            accept="image/png,image/jpeg,image/jpg"
+            onChange={handleFileChange}
+            className={baseClass}
+          />
+          {imageUrl ? (
+            <div className="mt-3 flex items-start gap-4">
+              <div className="relative h-28 w-28 overflow-hidden rounded-md border border-slate-200 bg-slate-50 shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imageUrl}
+                  alt={field.label}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="text-xs text-slate-500 mt-1">
+                {selectedFileUrl ? (
+                  <span className="font-semibold text-blue-600">New file selected</span>
+                ) : (
+                  <>
+                    <span className="font-semibold text-slate-600">Currently saved:</span>
+                    <p className="mt-0.5 truncate max-w-[200px]" title={existingUpload?.name}>
+                      {existingUpload?.name}
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : field.placeholder ? (
+            <span className="mt-2 block text-xs text-slate-500">{field.placeholder}</span>
           ) : null}
-          {field.placeholder ? <span className="mt-2 block text-xs text-slate-500">{field.placeholder}</span> : null}
-        </>
+        </div>
       ) : (
         <input name={field.id} defaultValue={value} required={field.required} placeholder={field.placeholder} type={field.kind} className={baseClass} />
       )}
@@ -163,13 +214,22 @@ function parseRepeaterItemIds(value?: string) {
   }
 }
 
-function parseUploadValue(value: string): { name: string } | null {
+function parseUploadValue(value: string): { name: string; filePath?: string } | null {
   try {
-    const parsed = JSON.parse(value) as { name?: string };
-    return parsed.name ? { name: parsed.name } : null;
+    const parsed = JSON.parse(value) as { name?: string; filePath?: string };
+    return parsed.name ? { name: parsed.name, filePath: parsed.filePath } : null;
   } catch {
     return null;
   }
+}
+
+function getUploadApiUrl(filePath?: string) {
+  if (!filePath) return "";
+  const match = filePath.match(/data\/uploads\/(.+)$/);
+  if (match) {
+    return `/api/uploads/${match[1]}`;
+  }
+  return "";
 }
 
 function CheckboxesControl({ field, value = "" }: { field: FormField; value?: string }) {

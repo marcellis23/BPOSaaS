@@ -634,3 +634,22 @@ At the beginning of each new session, read this file before making changes. At t
 
 ### Next Notes
 - Continue with the Comparable Market Analysis (CMA) section, starting with the Subject Comps form.
+
+## 2026-05-26 - Cover Page Layout and Image Thumbnails
+
+### Changes
+- Re-ordered the fields in the Cover Page schema definition (`apps/bpo-platform/lib/forms/cover-page.ts`) to move `subjectFrontPhoto` right after `mandatoryDisclosure` and before the `Client Information` section fields.
+- Created `/api/uploads/[...path]` route to securely serve uploaded images from `data/uploads/` with safety checks.
+- Updated `FieldControl` to handle image input file changes and display a thumbnail preview of the selected image.
+- Updated `FieldControl` to show a thumbnail preview of the already saved image asset.
+
+### Reasons
+- Subject Front Photo is form metadata/detail and belongs before the client information details.
+- Having visual confirmation of the chosen file (newly selected or currently saved) prevents errors and increases assurance.
+
+### Verification
+- Checked that types compile cleanly with `npx tsc --noEmit`.
+- Ran Next.js production build (`npm run build`) successfully with 0 warnings or errors.
+
+### Next Notes
+- Test uploading and saving images via the browser interface and verify thumbnail display.
