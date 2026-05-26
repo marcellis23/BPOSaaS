@@ -671,3 +671,22 @@ At the beginning of each new session, read this file before making changes. At t
 
 ### Next Notes
 - Continue with the Comparable Market Analysis (CMA) section, starting with the Subject Comps form.
+
+## 2026-05-26 - Completed First Review of Exterior Property Condition Report Functions
+
+### Changes
+- Completed the final verification and walkthrough for all native exterior Property Condition Report (PCR) functions, including:
+  - Form layout re-ordering (putting Subject Front Photo before Client Information).
+  - Client-side and server-side image preview thumbnails via a custom secure API file asset route.
+  - Seeding and verification of PCR Summary and Signature Page forms with typical assumptions, limiting conditions, disclosures, and licensee details.
+  - Formatting layout fixes for zero page title overlaps and correct header lines on overflow pages.
+
+### Reasons
+- This marks the completion of the first review milestone for all core exterior Property Condition Report (PCR) functions and deliverables, validating the Next.js SaaS app form collection and PDF generation capabilities.
+
+### Verification
+- Fully compiled the production build with 0 warnings or errors.
+- Generated and visually checked the complete client-ready PDF at `supportdocs/sample/1047-W-Nevada-St-PCR.pdf` showing correct details across all 13 pages.
+
+### Next Notes
+- Shift focus to the Comparable Market Analysis (CMA) section, starting with migrating the Subject Comps form.
