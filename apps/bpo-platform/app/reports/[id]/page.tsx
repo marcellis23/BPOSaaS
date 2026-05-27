@@ -12,10 +12,10 @@ import {
   uploadFormPdfAction
 } from "../../actions";
 import { SubmitButton } from "../../../components/SubmitButton";
+import { SidebarClientSection } from "../../../components/SidebarClientSection";
 import { requireUser } from "../../../lib/auth";
 import { formCatalog, getBaseFormId, getCatalogForm, getLocalFormHref, groupCatalogForms, isFormInstance, normalizeFormInstanceIds } from "../../../lib/form-catalog";
 import { reportTypes } from "../../../lib/form-sections";
-import { stateOptions } from "../../../lib/forms/cover-page";
 import { readData } from "../../../lib/store";
 import type { ReportFormStatus } from "../../../lib/types";
 
@@ -135,33 +135,20 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
             <select name="reportType" defaultValue={project.reportType} required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
               {reportTypes.map((type) => <option value={type} key={type}>{type}</option>)}
             </select>
-            <div className="border-t border-slate-200 pt-4">
-              <h3 className="text-sm font-bold text-slate-950">Client information</h3>
-              <p className="mt-1 text-xs text-slate-500">Choose a saved client or update this report&apos;s client details.</p>
-            </div>
-            <select name="clientId" defaultValue={project.clientId ?? ""} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-              <option value="">New client / entered below</option>
-              {clients.map((client) => (
-                <option value={client.id} key={client.id}>
-                  {[client.company, client.contact, client.city, client.state].filter(Boolean).join(" - ")}
-                </option>
-              ))}
-            </select>
-            <input name="clientCompany" defaultValue={project.clientCompany} placeholder="Client company" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            <input name="clientName" defaultValue={project.clientName} placeholder="Client contact" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            <input name="clientAddress" defaultValue={project.clientAddress} placeholder="Client address" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            <div className="grid grid-cols-4 gap-2">
-              <input name="clientCity" defaultValue={project.clientCity} placeholder="City" className="col-span-2 rounded-md border border-slate-300 px-3 py-2 text-sm" />
-              <select name="clientState" defaultValue={project.clientState ?? ""} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-                <option value="">State</option>
-                {stateOptions.map((state) => <option value={state} key={state}>{state}</option>)}
-              </select>
-              <input name="clientZip" defaultValue={project.clientZip} placeholder="ZIP" className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <input name="clientPhone" defaultValue={project.clientPhone} placeholder="Contact number" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
-              <input name="clientEmail" type="email" defaultValue={project.clientEmail} placeholder="Contact email" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            </div>
+            <SidebarClientSection
+              initialClients={clients}
+              defaultValues={{
+                clientId: project.clientId,
+                clientCompany: project.clientCompany,
+                clientName: project.clientName,
+                clientAddress: project.clientAddress,
+                clientCity: project.clientCity,
+                clientState: project.clientState,
+                clientZip: project.clientZip,
+                clientPhone: project.clientPhone,
+                clientEmail: project.clientEmail
+              }}
+            />
             <div className="border-t border-slate-200 pt-4">
               <h3 className="text-sm font-bold text-slate-950">Subject property</h3>
             </div>
