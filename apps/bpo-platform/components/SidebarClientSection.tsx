@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { createClientAction } from "../app/actions";
 import type { ClientRecord } from "../lib/types";
 
@@ -29,6 +30,11 @@ interface SidebarClientSectionProps {
 export function SidebarClientSection({ initialClients, defaultValues }: SidebarClientSectionProps) {
   const [clientList, setClientList] = useState<ClientRecord[]>(initialClients);
   const [selectedClientId, setSelectedClientId] = useState(defaultValues.clientId || "");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Client fields state
   const [clientCompany, setClientCompany] = useState(defaultValues.clientCompany || "");
@@ -251,7 +257,7 @@ export function SidebarClientSection({ initialClients, defaultValues }: SidebarC
       </div>
 
       {/* Modal Popup */}
-      {showModal && (
+      {showModal && mounted && createPortal(
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150 text-left">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 bg-slate-50">
@@ -383,7 +389,8 @@ export function SidebarClientSection({ initialClients, defaultValues }: SidebarC
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
