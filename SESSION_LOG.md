@@ -690,3 +690,23 @@ At the beginning of each new session, read this file before making changes. At t
 
 ### Next Notes
 - Shift focus to the Comparable Market Analysis (CMA) section, starting with migrating the Subject Comps form.
+
+## 2026-05-26 - Implement Guided Builder Client Autofill and Dynamic Modal Creation
+
+### Changes
+- Created a client-side component [NewReportForm.tsx](file:///Users/ronaldwilliams/Projects/real-estate-saas/apps/bpo-platform/components/NewReportForm.tsx) to manage state for report project configuration and client details.
+- Integrated client auto-fill dropdown menu options that populate the client detail fields (Company, Contact Name, Address, City, State, ZIP, Phone, Email) when a client is selected.
+- Implemented a modal popup window for creating a new client when "+ Create new client..." is selected or the "Add Client" button is clicked.
+- Added a server action `createClientAction` in [actions.ts](file:///Users/ronaldwilliams/Projects/real-estate-saas/apps/bpo-platform/app/actions.ts) that persists the new client in the JSON database.
+- Confirmed that once the new client form is submitted, the dropdown selection updates and the form fields auto-populate with the newly created client's information.
+- Updated Next.js page route at [page.tsx](file:///Users/ronaldwilliams/Projects/real-estate-saas/apps/bpo-platform/app/reports/new/page.tsx) to pass initial clients fetched server-side into the client component.
+- Resolved TypeScript errors and unused import/variable warnings in `NewReportForm.tsx` and `actions.ts`.
+
+### Reasons
+- Enhances user experience by removing manual copying of client information for every report.
+- Centralizes client data entry, making client creation accessible directly from the report project builder flow.
+
+### Verification
+- Checked that types compile cleanly using `npx tsc --noEmit`.
+- Ran Next.js production build (`npm run build`) successfully with 0 warnings or errors.
+- Verified that server action flow and state management logic correctly update dropdown client selection and form fields upon creation.

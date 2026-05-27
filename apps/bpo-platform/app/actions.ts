@@ -657,3 +657,40 @@ export async function exportReportAction(formData: FormData) {
   revalidatePath(`/reports/${projectId}`);
   redirect(`/api/reports/${projectId}/download`);
 }
+
+export async function createClientAction(clientData: {
+  company: string;
+  contact: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  phone: string;
+  email: string;
+}): Promise<ClientRecord> {
+  const user = await requireUser();
+  let client: ClientRecord | null = null;
+  await updateData((data) => {
+    const now = nowIso();
+    client = {
+      id: newId("client"),
+      organizationId: user.organizationId,
+      company: (clientData.company || "").trim(),
+      contact: (clientData.contact || "").trim(),
+      address: (clientData.address || "").trim(),
+      city: (clientData.city || "").trim(),
+      state: (clientData.state || "").trim().toUpperCase(),
+      zip: (clientData.zip || "").trim(),
+      phone: (clientData.phone || "").trim(),
+      email: (clientData.email || "").trim().toLowerCase(),
+      createdAt: now,
+      updatedAt: now
+    };
+    data.clients.push(client);
+  });
+  if (!client) {
+    throw new Error("Failed to create client");
+  }
+  return client;
+}
+
