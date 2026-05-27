@@ -725,3 +725,25 @@ At the beginning of each new session, read this file before making changes. At t
 - Verified code compilation with `npx tsc --noEmit`.
 - Confirmed Next.js production build (`npm run build`) succeeds cleanly with no compilation issues.
 
+## 2026-05-27 - Create and Populate 539 E Walnut Ln Interior Property Condition Report
+
+### Changes
+- Registered the property record (539 E Walnut Ln, Philadelphia, PA 19144), client record (John Moneypitt / ABC Real Estate Investors), and project record (`report-yprbd4fwc`) in the database (`app-data.json`).
+- Processed, transferred, and registered front photos, interior photos, basement/foundation photos, mechanical system photos, and floor plan sketches to the project's uploads folder.
+- Pre-populated all relevant form submissions:
+  - `cover-page`: Title, client information, and subject front photo.
+  - `pcr-interior`: Building details, level-by-level inspection notes (Basement, First Floor, Second Floor), room-level conditions, utility connections, and code violation/licensing status. Added a detailed repair budget list totaling $45,000.
+  - `pcr-summary`: Text summary of property condition, repair range ($45,000 - $60,000), and recommended next steps.
+  - `signature-page`: Standard interior gut-rehab assumptions, visual-walkthrough limiting conditions, municipal violation disclosures, compliance certifications, and Ronald's signature asset.
+  - `front-photos`, `additional-photos`, and `floorplans-sketches` attachments.
+- Compiled the complete interior PCR package PDF to `supportdocs/sample/539-E-Walnut-Ln-PCR.pdf` using `createMergedReportPdf`.
+
+### Reasons
+- Standardizes investor property condition reporting for full interior inspections.
+- Demonstrates integration of Philadelphia L&I violation details (historical weeds/rubbish complied, active rental license case CF-2024-014863 with $300 fine, inactive rental license 913861) and MLS documentation.
+
+### Verification
+- Ran Next.js production build (`npm run build`) successfully with 0 warnings or errors.
+- Verified that the generated report PDF at `supportdocs/sample/539-E-Walnut-Ln-PCR.pdf` compiled correctly and has a file size of ~30MB.
+
+
