@@ -11,7 +11,8 @@ import { frontPhotosForm } from "./front-photos";
 import { grossRentMultiplierForm } from "./gross-rent-multiplier";
 import { marSummaryForm } from "./mar-summary";
 import { marketAnalysisAfterRepairForm } from "./market-analysis-after-repair";
-import { marketAnalysisGeneralForm } from "./market-analysis-general";
+import { marketAnalysisAsIsForm } from "./market-analysis-asis";
+import { submarketAnalysisAsIsForm } from "./submarket-analysis-asis";
 import { mergeFilesFinalReportForm } from "./merge-files-final-report";
 import { multiUnitApartmentForm } from "./multi-unit-apartment";
 import { otherPdfAddendumForm } from "./other-pdf-addendum";
@@ -39,7 +40,8 @@ export const localForms: LocalFormDefinition[] = [
   pcrSummaryForm,
   constructionCostsForm,
   repairRenovEstimateForm,
-  marketAnalysisGeneralForm,
+  marketAnalysisAsIsForm,
+  submarketAnalysisAsIsForm,
   marketAnalysisAfterRepairForm,
   marSummaryForm,
   multiUnitApartmentForm,

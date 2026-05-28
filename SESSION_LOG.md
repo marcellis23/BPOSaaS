@@ -746,4 +746,38 @@ At the beginning of each new session, read this file before making changes. At t
 - Ran Next.js production build (`npm run build`) successfully with 0 warnings or errors.
 - Verified that the generated report PDF at `supportdocs/sample/539-E-Walnut-Ln-PCR.pdf` compiled correctly and has a file size of ~30MB.
 
+## 2026-05-27 - Form Usability Enhancements & MAR Summary Transition
+
+### Changes
+- **Runtime Error & Cover Page Autofill Fixes**:
+  - Resolved "Unsupported report type" by mapping the select dropdown in `NewReportForm.tsx` to standardized `ReportType` options.
+  - Resolved Cover Page prefill bugs to automatically populate all client details (Company, Contact Name, Address, City, State, ZIP, Phone, Email) in the fields instead of only Contact Name.
+- **Merged PDF Layout Adjustments**:
+  - Reordered PDF page compilation so the final summary page is positioned at the very end of the report.
+  - Stripped footer titles/numbers from the merged report to completely resolve overlapping text issues.
+- **PCR - Interior Level & Room Details updates**:
+  - Reconfigured `FieldControl.tsx` so Level/Room Notes textareas render on separate full-width rows inside repeater sections.
+  - Changed the Room Level input to a select dropdown matching the Level Title.
+- **Split Market & Submarket schemas**:
+  - Replaced the general market analysis schema with `market-analysis-asis.ts` and `submarket-analysis-asis.ts`.
+- **Form Usability Options 2, 3 & 5**:
+  - Created a custom `FormattedInput` in `FieldControl.tsx` to handle auto-masking of currency values (e.g. `$250,000`) and percentage values (e.g. `97.5%`) on blur, reverting to plain numbers on focus to support mobile keyboards.
+  - Integrated local Pennsylvania Address Autocomplete dropdowns that suggest Philadelphia/PA area addresses as the user types, auto-populating city, state, and zip.
+  - Implemented real-time calculations in `LocalFormFields.tsx` (mix percentage totals, distressed listing sums, and percentage ratios).
+  - Styled calculated total percentages to turn green at `100.0%` and red otherwise.
+  - Added range boundary validations with warning banners for pricing segmentation inputs.
+- **MAR Summary & Conclusion Schema**:
+  - Re-wrote `mar-summary.ts` schema using `MAR Summary & Conclusion.md` to define all 5 sections (Subject Info, Market Context, Subject Analysis/Submarket, Purpose/History, and After Repair Condition Assessment) consistent with the live WordPress form.
+
+### Reasons
+- Usability enhancements increase agent data entry speed, reduce input calculation mistakes, and behave like a premium SaaS.
+- Splitting the market and submarket schemas aligns with modular guided report creation.
+- A fully detailed `mar-summary` schema is required to transition the summary page output away from WordPress.
+
+### Verification
+- Checked that types compile cleanly using `npm run typecheck`.
+- Verified that server runs without errors.
+- Created `walkthrough.md` to log changes.
+
+
 

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { createReportAction, createClientAction } from "../app/actions";
 import { SubmitButton } from "./SubmitButton";
+import { reportTypes } from "../lib/form-sections";
 import type { ClientRecord } from "../lib/types";
 
 const stateOptions = [
@@ -12,36 +13,6 @@ const stateOptions = [
   "WI", "WY", "DC", "AS", "GU", "MP", "PR", "VI"
 ];
 
-const reportTitleOptions = [
-  "Vacant Lot Site Report",
-  "Property Condition Report (PCR) - Exterior Only",
-  "Property Condition Report (PCR) - Full Site",
-  "Market Analysis Report",
-  "Comparable Market Analysis - Residential Vacant Lot",
-  "Comparable Market Analysis - Residential SFR",
-  "Comparable Market Analysis - Residential Multifamily (2-4 Units)",
-  "Comparable Market Analysis - Multifamily (5+ Units)",
-  "Comparable Market Analysis - Mixed-Use",
-  "Comparable Market Analysis - Commercial",
-  "Comparable Market Analysis - Residential Vacant Lot w/Proposed Construction",
-  "Comparable Market Analysis - Residential SFR w/ARV",
-  "Comparable Market Analysis - Residential Multifamily (2-4 Units) w/ARV",
-  "Comparable Market Analysis - Multifamily (5+ Units) w/ARV",
-  "Comparable Market Analysis - Mixed-Use w/ARV",
-  "Comparable Market Analysis - Commercial w/ARV",
-  "Broker Price Opinion - Residential Vacant Lot",
-  "Broker Price Opinion - Residential SFR",
-  "Broker Price Opinion - Residential Multifamily (2-4 Units)",
-  "Broker Price Opinion - Multifamily (5+ Units)",
-  "Broker Price Opinion - Mixed-Use",
-  "Broker Price Opinion - Commercial",
-  "Broker Price Opinion - Residential Vacant Lot w/Proposed Construction",
-  "Broker Price Opinion - Residential SFR w/ARV",
-  "Broker Price Opinion - Residential Multifamily (2-4 Units) w/ARV",
-  "Broker Price Opinion - Multifamily (5+ Units) w/ARV",
-  "Broker Price Opinion - Mixed-Use w/ARV",
-  "Broker Price Opinion - Commercial w/ARV"
-];
 
 const assignmentIntentOptions = [
   { value: "general_bpo", label: "General BPO" },
@@ -232,7 +203,7 @@ export function NewReportForm({ initialClients }: NewReportFormProps) {
         <label className="block">
           <span className="text-sm font-medium text-slate-800">Report Type</span>
           <select name="reportType" required defaultValue="BPO" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-            {reportTitleOptions.map((type) => (
+            {reportTypes.map((type) => (
               <option value={type} key={type}>{type}</option>
             ))}
           </select>

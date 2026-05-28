@@ -1033,6 +1033,20 @@ async function addAerialViewsPdf(
   return page;
 }
 
+function moveFirstPageToEnd(pdf: PDFDocument) {
+  const pages = pdf.getPages();
+  if (pages.length <= 1) return;
+  const pagesCopy = [...pages];
+  const count = pages.length;
+  for (let i = 0; i < count; i++) {
+    pdf.removePage(0);
+  }
+  for (let i = 1; i < count; i++) {
+    pdf.addPage(pagesCopy[i]);
+  }
+  pdf.addPage(pagesCopy[0]);
+}
+
 export async function createMergedReportPdf(data: AppData, project: ReportProject): Promise<GeneratedPdf> {
   const property = data.properties.find((item) => item.id === project.propertyId);
   const submissions = data.submissions.filter((item) => item.reportProjectId === project.id);
@@ -1131,7 +1145,7 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
     }
 
     await fs.mkdir(generatedDir, { recursive: true });
-    drawFooterPageNumbers(pdf, smallFont, project.title);
+    moveFirstPageToEnd(pdf);
     const bytes = await pdf.save();
     const fileName = `${project.id}-${Date.now()}.pdf`;
     const filePath = path.join(generatedDir, fileName);
@@ -1173,7 +1187,7 @@ export async function createMergedReportPdf(data: AppData, project: ReportProjec
   }
 
   await fs.mkdir(generatedDir, { recursive: true });
-  drawFooterPageNumbers(pdf, smallFont, project.title);
+  moveFirstPageToEnd(pdf);
   const bytes = await pdf.save();
   const fileName = `${project.id}-${Date.now()}.pdf`;
   const filePath = path.join(generatedDir, fileName);

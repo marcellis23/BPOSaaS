@@ -168,13 +168,23 @@ export const formCatalog: FormCatalogItem[] = [
     recommendedWhen: { propertyConditions: ["needs_repairs", "distressed", "after_repair"], valuationGoals: ["after_repair", "as_is", "support_only"] }
   },
   {
-    id: "market-analysis-general",
-    title: "Market Analysis (General)",
+    id: "market-analysis-asis",
+    title: "Market Analysis (As-Is)",
     category: "Market Analysis Report (MAR)",
-    description: "Neighborhood use mix, boundaries, DOM, inventory, distress, and market conditions.",
-    wordpressUrl: "https://rwilliamspropertyadvisor.com/market-analysis-report/",
+    description: "Neighborhood land use, housing stock comparisons, economic influences, sales activity, and rental trends.",
+    wordpressUrl: "https://rwilliamspropertyadvisor.com/market-analysis-report-asis/",
     workflowType: "native_saas",
     sortOrder: 300,
+    recommendedWhen: { reportTypes: ["BPO", "Market Analysis Report", "Valuation Support Report"], valuationGoals: ["as_is", "support_only", "reconciliation"] }
+  },
+  {
+    id: "submarket-analysis-asis",
+    title: "Submarket Analysis (As-Is)",
+    category: "Market Analysis Report (MAR)",
+    description: "Specific submarket definitions, competitive segment sales and rentals, price tiers, and target buyer profiles.",
+    wordpressUrl: "https://rwilliamspropertyadvisor.com/submarket-analysis-report-asis/",
+    workflowType: "native_saas",
+    sortOrder: 305,
     recommendedWhen: { reportTypes: ["BPO", "Market Analysis Report", "Valuation Support Report"], valuationGoals: ["as_is", "support_only", "reconciliation"] }
   },
   {

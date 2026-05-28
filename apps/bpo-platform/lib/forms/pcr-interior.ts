@@ -189,7 +189,7 @@ export const pcrInteriorForm: LocalFormDefinition = {
       minItems: 1,
       addButtonLabel: "Add Room",
       fields: [
-        { id: "level", label: "Level", kind: "text", placeholder: "e.g., First Floor" },
+        { id: "level", label: "Level", kind: "select", required: true, options: ["Basement/Foundation", "First Floor Level", "Second Floor Level", "Third Floor Level", "Fourth Floor Level", "Fifth Floor Level", "Roof Top Level", "Other"] },
         { id: "type", label: "Room Type", kind: "select", required: true, options: ["Living Room", "Family Room", "Dining Room", "Kitchen", "Bedroom", "Full Bath", "Half Bath", "Laundry/Utility", "Office/Den", "Hall/Closet", "Other"] },
         { id: "name", label: "Room Name", kind: "text", placeholder: "e.g., Primary Bedroom, Front Living" },
         { id: "condition", label: "Room Condition", kind: "select", required: true, options: conditionOptions },
