@@ -241,7 +241,7 @@ export function FieldControl({ field, value = "", onChange, onSelectAddress }: F
   if (field.kind === "divider") {
     return (
       <div className="border-t border-slate-200 pt-6">
-        <h3 className="text-base font-bold text-slate-950">{field.label}</h3>
+        <h3 className="text-base font-bold text-blue-700">{field.label}</h3>
         {field.placeholder ? <p className="mt-1 text-sm leading-6 text-slate-600">{field.placeholder}</p> : null}
       </div>
     );
@@ -261,7 +261,7 @@ export function FieldControl({ field, value = "", onChange, onSelectAddress }: F
   let computedClass = baseClass;
   if (isReadOnly) {
     computedClass += " bg-slate-100 cursor-not-allowed font-bold";
-    if (isCalculatedPct && value) {
+    if (isCalculatedPct) {
       if (value === "100.0%" || value === "100%") {
         computedClass += " text-green-700 bg-green-50 border-green-300";
       } else {
@@ -412,7 +412,7 @@ function RepeaterControl({
     <div className="mt-6">
       <input type="hidden" name={`${field.id}__items`} value={items.map((item) => item.id).join(",")} />
       <div className="border-t border-slate-200 pt-6">
-        <h3 className="text-base font-bold text-slate-950">{field.label}</h3>
+        <h3 className="text-base font-bold text-blue-700">{field.label}</h3>
         {field.placeholder ? <p className="mt-1 text-sm leading-6 text-slate-600">{field.placeholder}</p> : null}
       </div>
 

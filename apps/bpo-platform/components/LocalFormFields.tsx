@@ -175,14 +175,83 @@ export function LocalFormFields({ fields }: LocalFormFieldsProps) {
         </div>
       ) : null}
 
-      <div className="mt-5 grid gap-5 md:grid-cols-4">
+      <div className="mt-5 grid gap-5 md:grid-cols-12">
         {fields.map(({ field, value, sectionTitle }) => {
           if (!isVisible(field, values)) return null;
+
+          // Intercept Land Use Mix / Occupancy fields to group them into two columns
+          const landUseGroupFields = [
+            "lu_mix_total_pct",
+            "lu_residential",
+            "lu_multifamily",
+            "lu_apartments",
+            "lu_commercial",
+            "lu_other",
+            "occ_total_pct",
+            "occ_owner",
+            "occ_tenant",
+            "occ_vacant"
+          ];
+
+          if (landUseGroupFields.includes(field.id)) {
+            if (field.id !== "lu_mix_total_pct") {
+              return null; // Skip rendering individual fields as they are grouped
+            }
+
+            const leftFieldItems = fields.filter(f => [
+              "lu_mix_total_pct",
+              "lu_residential",
+              "lu_multifamily",
+              "lu_apartments",
+              "lu_commercial",
+              "lu_other"
+            ].includes(f.field.id));
+
+            const rightFieldItems = fields.filter(f => [
+              "occ_total_pct",
+              "occ_owner",
+              "occ_tenant",
+              "occ_vacant"
+            ].includes(f.field.id));
+
+            return (
+              <div key="land-use-summary-columns" className="md:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-8 border border-slate-200 rounded-lg bg-slate-50/50 p-5 mt-2">
+                {/* Left Column */}
+                <div className="space-y-4">
+                  {leftFieldItems.map((item) => (
+                    <div key={item.field.id}>
+                      <FieldControl
+                        field={item.field}
+                        value={values[item.field.id] ?? item.value}
+                        onChange={(newVal) => handleFieldChange(item.field.id, newVal)}
+                        onSelectAddress={handleSelectAddress}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-4">
+                  {rightFieldItems.map((item) => (
+                    <div key={item.field.id}>
+                      <FieldControl
+                        field={item.field}
+                        value={values[item.field.id] ?? item.value}
+                        onChange={(newVal) => handleFieldChange(item.field.id, newVal)}
+                        onSelectAddress={handleSelectAddress}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div key={field.id} className={getFieldColumnClass(field, sectionTitle)}>
               {sectionTitle ? (
                 <div className={field.id === "reportTitle" ? "mb-5" : "mb-5 mt-3 border-t border-slate-200 pt-6"}>
-                  <h3 className="text-base font-bold text-slate-950">{sectionTitle}</h3>
+                  <h3 className="text-base font-bold text-blue-700">{sectionTitle}</h3>
                 </div>
               ) : null}
               <FieldControl
@@ -200,11 +269,13 @@ export function LocalFormFields({ fields }: LocalFormFieldsProps) {
 }
 
 function getFieldColumnClass(field: FormField, sectionTitle?: string) {
-  if (field.fullWidth || field.kind === "textarea" || field.kind === "repeater" || field.kind === "divider" || sectionTitle) return "md:col-span-4";
-  if (field.layoutSpan === 1) return "md:col-span-1";
-  if (field.layoutSpan === 2) return "md:col-span-2";
-  if (field.layoutSpan === 3) return "md:col-span-3";
-  return "md:col-span-2";
+  if (field.fullWidth || field.kind === "textarea" || field.kind === "repeater" || field.kind === "divider" || sectionTitle) return "md:col-span-12";
+  if (field.layoutSpan === 1) return "md:col-span-3"; // 25%
+  if (field.layoutSpan === 2) return "md:col-span-6"; // 50%
+  if (field.layoutSpan === 3) return "md:col-span-9"; // 75%
+  if (field.layoutSpan === 4) return "md:col-span-12"; // 100%
+  if (field.layoutSpan === 5) return "md:col-span-4"; // 33%
+  return "md:col-span-6"; // default
 }
 
 function isVisible(field: FormField, values: Record<string, string>) {

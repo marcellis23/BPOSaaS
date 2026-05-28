@@ -780,4 +780,25 @@ At the beginning of each new session, read this file before making changes. At t
 - Created `walkthrough.md` to log changes.
 
 
+## 2026-05-28 - Submarket Analysis Layout Updates & Runtime Resolution
+
+### Changes
+- **Submarket Analysis (As-Is) Layout Updates**:
+  - Positioned the Sales **Inventory Trend** (`sm_inventory_trend`) and Rental **Inventory Trend** (`sm_rent_inventory_trend`) select fields to occupy their own full-width rows (`layoutSpan: 4`).
+  - Aligned **Total Rental Listing Activity** and **Vacancy Rate** side-by-side on the row preceding the rental **Inventory Trend** (`layoutSpan: 2` each).
+  - Moved the **Exclude rental price brackets from this report?** dropdown field to its own full-width row (`layoutSpan: 4`).
+- **Next.js Bundler Cache Clearance**:
+  - Purged the local Next.js dev cache (`apps/bpo-platform/.next`) and restarted the dev server background task to fix `MODULE_NOT_FOUND` (Cannot find module './331.js') Webpack runtime errors.
+
+### Reasons
+- Standardizes submarket field grouping to create a consistent, grid-aligned, professional user interface.
+- Ensures the development environment is stable and avoids HMR-related webpack bundler crashes.
+
+### Verification
+- Successfully ran `npm run typecheck` to verify complete type safety.
+- Successfully compiled the production build using `npm run build` with zero compiler errors.
+- Checked the logs of the dev server to confirm it successfully served `/reports/[id]` and the `/reports/[id]/forms/submarket-analysis-asis` form with a status code of 200.
+
+
+
 

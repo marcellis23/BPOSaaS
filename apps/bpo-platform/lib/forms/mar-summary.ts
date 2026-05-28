@@ -18,21 +18,24 @@ export const marSummaryForm: LocalFormDefinition = {
       label: "Property Type",
       kind: "select",
       required: true,
-      options: ["Single Family", "Multifamily", "Condo", "Commercial", "Land", "Other"]
+      options: ["Single Family", "Multifamily", "Condo", "Commercial", "Land", "Other"],
+      layoutSpan: 5
     },
     {
       id: "occupancy",
       label: "Occupancy Status",
       kind: "select",
       required: true,
-      options: ["Owner", "Tenant", "Vacant"]
+      options: ["Owner", "Tenant", "Vacant"],
+      layoutSpan: 5
     },
     {
       id: "condition_current",
       label: "Overall Condition (Current)",
       kind: "select",
       required: true,
-      options: ["Excellent", "Good", "Average", "Fair", "Poor", "Damaged"]
+      options: ["Excellent", "Good", "Average", "Fair", "Poor", "Damaged"],
+      layoutSpan: 5
     },
 
     { id: "marketContextDivider", label: "Market Context", kind: "divider", placeholder: "Describe the broader metro and the subject's primary market to help readers understand drivers and trends." },
@@ -48,10 +51,11 @@ export const marSummaryForm: LocalFormDefinition = {
       id: "subject_position_tier",
       label: "Subject Property Position in Submarket",
       kind: "select",
-      options: ["High Positioning", "Average Positioning", "Low Positioning"]
+      options: ["High Positioning", "Average Positioning", "Low Positioning"],
+      layoutSpan: 5
     },
-    { id: "price_low", label: "Estimated Price Range - Low ($)", kind: "number" },
-    { id: "price_high", label: "Estimated Price Range - High ($)", kind: "number" },
+    { id: "price_low", label: "Estimated Price Range - Low ($)", kind: "number", layoutSpan: 5 },
+    { id: "price_high", label: "Estimated Price Range - High ($)", kind: "number", layoutSpan: 5 },
     { id: "subject_position_submarket", label: "Summary of Subject’s Position in the Submarket", kind: "textarea", placeholder: "Explain how the subject competes, including price, condition, and appeal...", fullWidth: true },
 
     { id: "reviewPurposeDivider", label: "Review Purpose & History", kind: "divider", placeholder: "Establish the objective of the report and the property's transaction history." },
@@ -97,10 +101,11 @@ export const marSummaryForm: LocalFormDefinition = {
       label: "Subject Property Position in Submarket (ARV)",
       kind: "select",
       options: ["High Positioning", "Average Positioning", "Low Positioning"],
-      visibleWhen: { fieldId: "arv_active", values: ["Yes"] }
+      visibleWhen: { fieldId: "arv_active", values: ["Yes"] },
+      layoutSpan: 5
     },
-    { id: "arv_price_low", label: "Estimated Price Range (ARV) - Low ($)", kind: "number", visibleWhen: { fieldId: "arv_active", values: ["Yes"] } },
-    { id: "arv_price_high", label: "Estimated Price Range (ARV) - High ($)", kind: "number", visibleWhen: { fieldId: "arv_active", values: ["Yes"] } },
+    { id: "arv_price_low", label: "Estimated Price Range (ARV) - Low ($)", kind: "number", visibleWhen: { fieldId: "arv_active", values: ["Yes"] }, layoutSpan: 5 },
+    { id: "arv_price_high", label: "Estimated Price Range (ARV) - High ($)", kind: "number", visibleWhen: { fieldId: "arv_active", values: ["Yes"] }, layoutSpan: 5 },
     { id: "arv_position_submarket", label: "Summary of the Subject's Position in the Submarket (ARV)", kind: "textarea", placeholder: "Explain the ARV positioning, including expected competitive set, buyer pool, and price tier...", fullWidth: true, visibleWhen: { fieldId: "arv_active", values: ["Yes"] } }
   ]
 };

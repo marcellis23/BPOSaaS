@@ -144,7 +144,7 @@ export interface FormField {
   addButtonLabel?: string;
   fields?: FormField[];
   fullWidth?: boolean;
-  layoutSpan?: 1 | 2 | 3 | 4;
+  layoutSpan?: 1 | 2 | 3 | 4 | 5;
   visibleWhen?: { fieldId: string; values: string[] };
 }
 
