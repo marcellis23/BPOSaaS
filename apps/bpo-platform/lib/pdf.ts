@@ -160,6 +160,16 @@ function parseUploadValue(value?: string): { filePath: string; name: string; typ
   }
 }
 
+function detectImageMimeType(bytes: Buffer) {
+  if (bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
+    return "image/png";
+  }
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return "image/jpeg";
+  }
+  return null;
+}
+
 async function drawUploadedImage(
   pdf: PDFDocument,
   page: PdfPage,
@@ -172,7 +182,8 @@ async function drawUploadedImage(
   if (!upload) return 0;
   try {
     const bytes = await fs.readFile(upload.filePath);
-    const image = upload.type === "image/png" ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes);
+    const detectedType = detectImageMimeType(bytes) ?? upload.type;
+    const image = detectedType === "image/png" ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes);
     const scaled = image.scaleToFit(maxWidth, maxHeight);
     page.drawImage(image, { x: x + (maxWidth - scaled.width) / 2, y: y - scaled.height, width: scaled.width, height: scaled.height });
     return scaled.height;

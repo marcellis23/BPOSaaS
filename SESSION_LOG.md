@@ -798,7 +798,40 @@ At the beginning of each new session, read this file before making changes. At t
 - Successfully ran `npm run typecheck` to verify complete type safety.
 - Successfully compiled the production build using `npm run build` with zero compiler errors.
 - Checked the logs of the dev server to confirm it successfully served `/reports/[id]` and the `/reports/[id]/forms/submarket-analysis-asis` form with a status code of 200.
+## 2026-05-31 - Additional Photos Grid Layout and Field Stacking
 
+### Changes
+- **Repeater Layout Grid & Field Stacking**:
+  - Updated `RepeaterControl` in `FieldControl.tsx` to automatically display repeater items in a responsive 2-column grid (`grid grid-cols-1 md:grid-cols-2 gap-6 mt-4`) if the repeater contains an image field.
+  - Adjusted standard subfields within grid-based repeaters to stack vertically (`flex-col` without `sm:flex-row`), placing the Photo Description input directly below the Photo file selector.
+- **Local Dev Server Management**:
+  - Stopped stale server instances on port 3000 and restarted the Next.js local development server (`npm run dev`).
 
+### Reasons
+- Aligning image-based repeater items in a 2-column grid makes the form visually compact and professional.
+- Stacking the photo selector and its description vertically inside the grid card prevents them from becoming squished horizontally and moves the description below the selector as requested.
 
+### Verification
+- Ran `npm run typecheck` to confirm type safety.
+- Ran `npm run build` to verify successful production page-rendering and asset builds with 0 compiler errors.
 
+## 2026-06-03 - Additional Photos PDF Image Embedding Fix
+
+### Changes
+- Updated local image upload handling to detect PNG and JPEG files from their byte signatures before saving upload metadata.
+- Updated PDF image embedding to detect PNG and JPEG bytes at render time, so already-saved uploads with misleading filenames or browser MIME types can regenerate correctly.
+- Removed the invalid explicit `encType` from the React server-action form after confirming React/Next sets form encoding automatically.
+
+### Reasons
+- Some selected `.jpg` files were PNG images internally. They previewed in the web form and saved to disk, but the PDF generator trusted the saved `image/jpeg` metadata, attempted JPEG embedding, and silently produced an Additional Photos PDF without images.
+- Byte-signature detection makes the workflow resilient to mislabeled photo files from browsers, phones, and image conversion tools.
+
+### Verification
+- Ran `npm run typecheck`.
+- Ran `npm run lint`.
+- Smoke-tested the affected saved Additional Photos uploads by embedding 4 mislabeled PNG-as-JPG images with `pdf-lib`, producing a 6.1 MB PDF instead of the prior text-only shell.
+- User confirmed the regenerated Additional Photos PDF displayed the selected images correctly.
+
+### Next Notes
+- Consider adding visible PDF-generation warnings when an uploaded image cannot be embedded, instead of silently omitting it.
+- Consider sharing a single image type detection helper between upload persistence and PDF generation if more upload workflows are added.

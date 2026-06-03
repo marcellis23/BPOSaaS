@@ -130,14 +130,26 @@ function ensureProjectFormProgress(
 }
 
 async function saveLocalImageUpload(projectId: string, formId: string, fieldId: string, file: File) {
-  if (!["image/jpeg", "image/png"].includes(file.type)) throw new Error("Only JPG and PNG image uploads are supported");
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const detectedType = detectImageMimeType(bytes);
+  if (!detectedType && !["image/jpeg", "image/png"].includes(file.type)) throw new Error("Only JPG and PNG image uploads are supported");
   const uploadsDir = path.join(process.cwd(), "data", "uploads", projectId, formId);
   await fs.mkdir(uploadsDir, { recursive: true });
   const safeName = file.name.replace(/[^a-z0-9._-]+/gi, "-") || `${fieldId}.jpg`;
   const filePath = path.join(uploadsDir, `${Date.now()}-${fieldId}-${safeName}`);
-  const bytes = Buffer.from(await file.arrayBuffer());
+  const storedType = detectedType ?? file.type;
   await fs.writeFile(filePath, bytes);
-  return JSON.stringify({ kind: "upload", name: file.name, type: file.type, filePath });
+  return JSON.stringify({ kind: "upload", name: file.name, type: storedType, filePath });
+}
+
+function detectImageMimeType(bytes: Buffer) {
+  if (bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
+    return "image/png";
+  }
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return "image/jpeg";
+  }
+  return null;
 }
 
 async function readLocalFormFieldValue(
@@ -693,4 +705,3 @@ export async function createClientAction(clientData: {
   }
   return client;
 }
-
