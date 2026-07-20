@@ -212,7 +212,7 @@ export function NewReportForm({ initialClients }: NewReportFormProps) {
         <div className="md:col-span-2 border-t border-slate-200 pt-5">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-slate-950">Client information</h2>
+              <h2 className="text-lg font-bold text-blue-700">Client information</h2>
               <p className="mt-1 text-sm text-slate-600">Choose a saved client or enter a new client. New details are saved for future reports.</p>
             </div>
             <button
@@ -337,7 +337,7 @@ export function NewReportForm({ initialClients }: NewReportFormProps) {
         </div>
 
         <div className="md:col-span-2 border-t border-slate-200 pt-5">
-          <h2 className="text-lg font-bold text-slate-950">Guided report questions</h2>
+          <h2 className="text-lg font-bold text-blue-700">Guided report questions</h2>
           <p className="mt-1 text-sm text-slate-600">These choices recommend the right forms. You can adjust the package on the next screen.</p>
         </div>
 
@@ -409,7 +409,7 @@ export function NewReportForm({ initialClients }: NewReportFormProps) {
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 bg-slate-50">
-              <h3 className="text-base font-bold text-slate-900">Add New Client</h3>
+              <h3 className="text-base font-bold text-blue-700">Add New Client</h3>
               <button
                 type="button"
                 onClick={() => setShowModal(false)}

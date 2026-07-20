@@ -141,11 +141,14 @@ export interface FormField {
   placeholder?: string;
   options?: string[];
   minItems?: number;
+  maxItems?: number;
   addButtonLabel?: string;
   fields?: FormField[];
   fullWidth?: boolean;
   layoutSpan?: 1 | 2 | 3 | 4 | 5;
   visibleWhen?: { fieldId: string; values: string[] };
+  visibleWhenAll?: { fieldId: string; values: string[] }[];
+  readOnly?: boolean;
 }
 
 export interface FormSubmission {

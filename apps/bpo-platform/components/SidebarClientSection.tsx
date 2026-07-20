@@ -159,7 +159,7 @@ export function SidebarClientSection({ initialClients, defaultValues }: SidebarC
       <div className="border-t border-slate-200 pt-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-slate-950">Client information</h3>
+            <h3 className="text-sm font-bold text-blue-700">Client information</h3>
             <p className="mt-1 text-xs text-slate-500">Choose a saved client or update this report&apos;s client details.</p>
           </div>
           <button
@@ -261,7 +261,7 @@ export function SidebarClientSection({ initialClients, defaultValues }: SidebarC
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150 text-left">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 bg-slate-50">
-              <h3 className="text-base font-bold text-slate-900">Add New Client</h3>
+              <h3 className="text-base font-bold text-blue-700">Add New Client</h3>
               <button
                 type="button"
                 onClick={() => setShowModal(false)}

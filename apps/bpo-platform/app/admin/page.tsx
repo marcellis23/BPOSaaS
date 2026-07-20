@@ -19,7 +19,7 @@ export default async function AdminPage() {
       <section className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="card overflow-hidden">
           <div className="border-b border-slate-200 px-5 py-4">
-            <h2 className="font-bold text-slate-950">Members</h2>
+            <h2 className="font-bold text-blue-700">Members</h2>
           </div>
           <div className="divide-y divide-slate-200">
             {members.map((member) => {
@@ -44,7 +44,7 @@ export default async function AdminPage() {
 
         <div className="card overflow-hidden">
           <div className="border-b border-slate-200 px-5 py-4">
-            <h2 className="font-bold text-slate-950">All report projects</h2>
+            <h2 className="font-bold text-blue-700">All report projects</h2>
           </div>
           <div className="divide-y divide-slate-200">
             {projects.length ? projects.map((project) => (

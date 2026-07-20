@@ -3,14 +3,98 @@ import { stateOptions } from "./cover-page";
 
 const yesNoUnknownOptions = ["Yes", "No", "Unknown"];
 const yesNoNaOptions = ["Yes", "No", "N/A"];
-const conditionOptions = ["Excellent", "Good", "Average", "Fair", "Poor", "Damaged", "N/A"];
-const exteriorConditionOptions = ["Excellent", "Good", "Average", "Fair", "Poor", "Damaged", "N/A - Not Applicable", "Unknown / Not Inspected"];
+const overallConditionOptions = ["Excellent", "Good", "Average", "Fair", "Poor", "Damaged", "N/A"];
+const componentConditionOptions = ["Good", "Average", "Fair", "Poor", "Damaged", "N/A"];
 const commonAreaConditionOptions = ["Excellent", "Good", "Average", "Fair", "Poor", "Damaged", "N/A - Not Applicable", "Unknown / Not Accessible / Not Inspected"];
-const associationVisible = { fieldId: "hasAssociation", values: ["Yes"] };
+const associationVisible = {
+  fieldId: "ownershipType",
+  values: ["Fee Simple - Subject to HOA", "Condominium Ownership", "Cooperative (Co-Op) Ownership"]
+};
+const detailPropertyTypeVisible = { fieldId: "propertyType", values: ["Commercial", "Special Use / Institutional", "Land & Site Types"] };
+const landSiteVisible = { fieldId: "propertyType", values: ["Land & Site Types"] };
+
+const settingOptions = [
+  "Urban - Central Business District (CBD)",
+  "Urban - High-Density Residential",
+  "Urban - Mixed Residential/Commercial",
+  "Urban - Industrial/Commercial Corridor",
+  "Urban - Transitional (Redevelopment Area)",
+  "Urban - Rowhome/Townhouse District",
+  "Urban - Multi-Family Residential Cluster",
+  "Urban - Institutional/Campus Area",
+  "Urban - Waterfront or Riverfront",
+  "Urban - Heavy Traffic Arterial",
+  "Suburban - Established Residential Neighborhood",
+  "Suburban - Newer Residential Development",
+  "Suburban - Mixed Residential/Commercial Corridor",
+  "Suburban - Residential Cul-de-Sac or Court",
+  "Suburban - Near Shopping Center or Retail Strip",
+  "Suburban - Adjacent to Park, School, or Recreation Area",
+  "Suburban - Transitional/Developing Area",
+  "Suburban - Light Industrial Fringe",
+  "Suburban - Golf Course or Planned Community",
+  "Suburban - Near Major Highway or Commuter Route",
+  "Rural - Agricultural / Farmland Area",
+  "Rural - Low-Density Residential",
+  "Rural - Village / Small Town Center",
+  "Rural - Wooded / Forested Area",
+  "Rural - Open Pasture / Meadow Setting",
+  "Rural - Mountain / Hilltop Setting",
+  "Rural - Lakeside / Riverfront Setting",
+  "Rural - Mixed Agricultural and Residential",
+  "Rural - Remote / Isolated Area",
+  "Rural - Near Quarry, Mining, or Industrial Use",
+  "Other (describe)",
+  "Unknown / Not Assessed"
+];
+
+const primaryViewOptions = [
+  "Park / Greenbelt",
+  "Open Space (Unobstructed)",
+  "Water View (River/Lake/Creek)",
+  "Golf Course",
+  "City Skyline",
+  "Courtyard / Garden",
+  "Trees / Wooded",
+  "Seasonal Water View",
+  "Mountain / Hilltop",
+  "Residential Street - Similar Homes",
+  "Residential Street - Mixed Housing Types",
+  "Rear Alley / Service Drive",
+  "Interior Block / Courtyard",
+  "School / Playground",
+  "Community Facilities (Library/Rec)",
+  "Local Retail (Neighborhood-Scale)",
+  "Light Rail/Transit (Not Adjacent)",
+  "Commercial Corridor (Arterial)",
+  "Industrial / Warehouse",
+  "Highway / Ramp",
+  "Railroad / Utility Corridor",
+  "Parking Lot (Surface)",
+  "Vacant Lots / Boarded Structures",
+  "Construction / Redevelopment Site",
+  "Municipal Facility (Treatment Plant/Depot)",
+  "Cemetery",
+  "Billboards / Signage Cluster",
+  "Obstructed / Limited View",
+  "Other (describe)",
+  "Unknown / Not Assessed"
+];
+
+const levelOptions = [
+  "Basement/Foundation",
+  "First Floor Level",
+  "Second Floor Level",
+  "Third Floor Level",
+  "Fourth Floor Level",
+  "Fifth Floor Level",
+  "Roof Top Level",
+  "Other"
+];
 
 export const pcrInteriorForm: LocalFormDefinition = {
   id: "pcr-interior",
-  title: "PCR - Interior",
+  title: "Property Condition Report (PCR) - Full Inspection",
   category: "Property Condition Report (PCR)",
   description: "Full interior and exterior property condition report with site, utilities, public records, room-level condition, repairs, and safety observations.",
   fields: [
@@ -61,8 +145,9 @@ export const pcrInteriorForm: LocalFormDefinition = {
       ]
     },
     { id: "occupancy", label: "Occupancy Status", kind: "select", required: true, options: ["Owner-Occupied", "Tenant-Occupied", "Vacant"] },
-    { id: "propertyTypeDetail", label: "Detail Property Type", kind: "text", placeholder: "e.g., Office Building, Church, Warehouse", fullWidth: true },
+    { id: "propertyTypeDetail", label: "Detail Property Type", kind: "text", placeholder: "e.g., Office Building, Church, Warehouse", fullWidth: true, visibleWhen: detailPropertyTypeVisible },
     { id: "legalDescription", label: "Legal Description", kind: "textarea", placeholder: "Suggested: 100-400 characters." },
+    { id: "landSiteTypesNotice", label: "Vacant Lot Feasibility Report Notice", kind: "divider", placeholder: "Please consider using the Vacant Lot Feasibility Report web form for land/site-only analysis.", visibleWhen: landSiteVisible },
 
     { id: "siteCharacteristicsDivider", label: "Site Characteristics", kind: "divider", placeholder: "Physical property attributes that affect utility, marketability, and condition." },
     { id: "siteSource", label: "Source", kind: "select", options: ["Public Records", "Assessment", "MLS Record", "Client Provided", "Self Inspection", "Other", "Unknown"], fullWidth: true },
@@ -77,45 +162,44 @@ export const pcrInteriorForm: LocalFormDefinition = {
     { id: "sitePropertyType", label: "Property Type", kind: "select", options: ["Detached", "Semi-detached", "Row/Townhouse", "Single Level Condominium", "Multi-Level Condominium", "Duplex", "Triplex", "Quadplex", "5+ Units", "Mixed Use", "Lot/Land", "Other"] },
     { id: "propertyStyle", label: "Property Style", kind: "select", options: ["Colonial", "Ranch", "Split-Level", "Contemporary", "Cape Cod", "Victorian", "Other"] },
     { id: "buildingConstruction", label: "Building Construction", kind: "select", options: ["Frame", "Masonry", "Brick", "Stone", "Mixed", "Other"], fullWidth: true },
-    { id: "basementType", label: "Basement Type", kind: "select", options: ["None", "Full", "Partial", "Crawl Space", "Slab", "Unknown"] },
-    { id: "basementFinishing", label: "Basement Finishing", kind: "select", options: ["N/A", "Unfinished", "Partially Finished", "Finished", "Unknown"] },
+    { id: "basementType", label: "Basement Type", kind: "select", options: ["None", "Crawlspace", "Partial Basement", "Full Basement"] },
+    { id: "basementFinishing", label: "Basement Finishing", kind: "select", options: ["Fully Finished", "Partially Finished", "Unfinished", "N/A"] },
     { id: "garageParking", label: "Garage / Parking", kind: "select", options: ["None", "On-Street", "Driveway", "1-Car Garage", "2-Car+ Garage", "Other"] },
     { id: "poolSpa", label: "Pool / Spa", kind: "select", options: ["None", "Pool", "Spa", "Pool & Spa"] },
-    { id: "extraAmenities", label: "Extra Amenities", kind: "textarea", placeholder: "e.g., Tennis Court, View" },
-    { id: "outbuildings", label: "Outbuildings", kind: "textarea", placeholder: "e.g., Shed, Detached Garage" },
-    { id: "siteInspectionSummary", label: "Site Inspection Summary", kind: "textarea", placeholder: "Easements, encroachments, site influences, proximity to amenities, traffic, etc." },
+    { id: "extraAmenities", label: "Extra Amenities", kind: "textarea", placeholder: "e.g., Tennis Court, View. Suggested: 50-250 characters." },
+    { id: "outbuildings", label: "Outbuildings", kind: "textarea", placeholder: "e.g., Shed, Detached Garage. Suggested: 50-250 characters." },
+    { id: "siteInspectionSummary", label: "Site Inspection Summary", kind: "textarea", placeholder: "Suggested: 100-400 characters." },
 
     { id: "utilityDivider", label: "Utility Availability", kind: "divider", placeholder: "Check all utility connections known to be available at the lot line or immediately serviceable." },
-    { id: "utilityPower", label: "Power", kind: "checkboxes", options: ["Electricity", "Renewable Energy", "Backup Power", "Unknown / Not Assessed"] },
-    { id: "utilityHeatingCooling", label: "Heating & Cooling", kind: "checkboxes", options: ["Natural Gas", "Propane", "Fuel Oil", "Electric Heat Pump / HVAC", "Geothermal Heating & Cooling", "Unknown / Not Assessed"] },
-    { id: "utilityWater", label: "Water Supply", kind: "checkboxes", options: ["Public/Municipal Water", "Private/Community Well", "Shared/Community System", "Irrigation Water", "Rainwater Harvesting / Cistern", "Unknown / Not Assessed"] },
+    { id: "utilityPower", label: "Power", kind: "checkboxes", options: ["Electricity (overhead/underground)", "Renewable Energy (solar, wind)", "Backup Power (generator, battery)", "Unknown / Not Assessed"] },
+    { id: "utilityHeatingCooling", label: "Heating & Cooling", kind: "checkboxes", options: ["Natural Gas (utility line)", "Propane (private tank)", "Fuel Oil (storage tank)", "Electric Heat Pump / HVAC", "Geothermal Heating & Cooling", "Unknown / Not Assessed"] },
+    { id: "utilityWater", label: "Water Supply", kind: "checkboxes", options: ["Public/Municipal Water", "Private Well / Community Well", "Shared/Community System", "Irrigation Water (rights, etc.)", "Rainwater Harvesting / Cistern", "Unknown / Not Assessed"] },
     { id: "utilityWastewater", label: "Wastewater Disposal", kind: "checkboxes", options: ["Public Sewer", "Private Septic System", "Holding Tank", "Greywater Recycling System", "Unknown / Not Assessed"] },
-    { id: "utilityCommunications", label: "Communications", kind: "checkboxes", options: ["Landline Telephone", "Internet", "Cable TV", "Cellular Network Coverage", "Unknown / Not Assessed"] },
-    { id: "utilityDrainage", label: "Drainage & Environmental Systems", kind: "checkboxes", options: ["Stormwater Drainage", "Irrigation/Drainage Canals", "Retention Ponds / Rainwater Capture", "Unknown / Not Assessed"] },
+    { id: "utilityCommunications", label: "Communications", kind: "checkboxes", options: ["Landline Telephone", "Internet (DSL, cable, fiber, etc.)", "Cable TV", "Cellular Network Coverage", "Unknown / Not Assessed"] },
+    { id: "utilityDrainage", label: "Drainage & Environmental Systems", kind: "checkboxes", options: ["Stormwater Drainage (sewer, swales)", "Irrigation/Drainage Canals", "Retention Ponds / Rainwater Capture", "Unknown / Not Assessed"] },
     { id: "utilityMunicipalServices", label: "Municipal & Community Services", kind: "checkboxes", options: ["Solid Waste Disposal", "Street Lighting", "Fire Hydrant / Protection", "Unknown / Not Assessed"] },
-    { id: "utilitiesNotes", label: "Notes on Utility Connections", kind: "textarea", placeholder: "Mix, distance, costs, special needs, etc." },
+    { id: "utilitiesNotes", label: "Notes on Utility Connections", kind: "textarea", placeholder: "Suggested: 100-300 characters." },
 
-    { id: "hasAssociation", label: "Is this property part of an HOA / Condo / Cooperative community?", kind: "select", required: true, options: yesNoUnknownOptions },
     { id: "associationDivider", label: "Association and Common Area Information", kind: "divider", placeholder: "Use when the property is subject to an HOA, condominium, cooperative, or shared common area arrangement.", visibleWhen: associationVisible },
-    { id: "associationName", label: "Association / Cooperative Name", kind: "text", visibleWhen: associationVisible },
+    { id: "associationName", label: "Association / Cooperative Name", kind: "text", placeholder: "As shown in MLS/public records or signage.", visibleWhen: associationVisible },
     { id: "seniorOnlyCommunity", label: "Senior-Only Community", kind: "select", options: yesNoUnknownOptions, visibleWhen: associationVisible },
-    { id: "associationDescription", label: "Association / Cooperative Summary Description", kind: "textarea", visibleWhen: associationVisible },
-    { id: "associationAddress", label: "Contact Address", kind: "text", visibleWhen: associationVisible },
-    { id: "associationPhone", label: "Contact Phone", kind: "text", visibleWhen: associationVisible },
+    { id: "associationDescription", label: "Association / Cooperative Summary Description", kind: "textarea", placeholder: "Short summary; public/MLS info only.", visibleWhen: associationVisible },
+    { id: "associationAddress", label: "Contact Address", kind: "text", placeholder: "Street address if published.", visibleWhen: associationVisible },
+    { id: "associationPhone", label: "Contact Phone", kind: "text", placeholder: "Numbers only if unsure of format.", visibleWhen: associationVisible },
     { id: "associationFeeAmount", label: "Association / Condo Fee", kind: "text", placeholder: "e.g., $425", visibleWhen: associationVisible },
     { id: "associationFeeFrequency", label: "Fee Paid", kind: "select", options: ["Monthly", "Quarterly", "Yearly", "Unknown"], visibleWhen: associationVisible },
     { id: "associationFeeIncludes", label: "Fee Includes", kind: "text", placeholder: "e.g., Water, Sewer, Trash, Exterior Maintenance", visibleWhen: associationVisible },
     { id: "associationParkingType", label: "Parking Type", kind: "select", options: ["Deeded", "Assigned", "Garage", "Open Lot", "Street Parking", "Unknown"], visibleWhen: associationVisible },
     { id: "associationPool", label: "Community Pool", kind: "select", options: yesNoUnknownOptions, visibleWhen: associationVisible },
     { id: "associationAmenities", label: "Common Amenities", kind: "text", placeholder: "e.g., Elevator, gym, community room", visibleWhen: associationVisible },
-    { id: "associationNotes", label: "Association / Cooperative Detailed Summary", kind: "textarea", visibleWhen: associationVisible },
+    { id: "associationNotes", label: "Association / Cooperative Detailed Summary", kind: "textarea", placeholder: "Keep concise; public/MLS info only.", visibleWhen: associationVisible },
 
     { id: "subjectSettingDivider", label: "Subject Setting and View", kind: "divider", placeholder: "Describe immediate surroundings, view quality, nearby construction, and broader external influences." },
-    { id: "immediateSurroundings", label: "Immediate Surroundings", kind: "textarea", placeholder: "Describe the immediate surroundings of the subject property." },
-    { id: "surroundingsRating", label: "Rating of Immediately Surrounding Properties", kind: "select", options: ["Excellent", "Good", "Average", "Fair", "Poor", "Mixed / Transitioning", "Unknown / Not Assessed"] },
-    { id: "surroundingsReasonShort", label: "Surroundings Rating Reason", kind: "textarea", placeholder: "Limit: 350 characters." },
-    { id: "primaryView", label: "Primary View", kind: "textarea", placeholder: "Describe the primary view from or toward the subject property." },
-    { id: "constructionActive", label: "Nearby Active Construction / Renovation?", kind: "select", options: yesNoUnknownOptions },
+    { id: "immediateSurroundings", label: "Immediate Surroundings (Setting)", kind: "select", required: true, options: settingOptions },
+    { id: "surroundingsRating", label: "Surrounding Property Condition", kind: "select", required: true, options: ["Well Kept", "Mixed Condition", "Poorly Kept", "Unknown / Not Assessed"] },
+    { id: "surroundingsReasonShort", label: "Brief reason for surrounding property condition", kind: "textarea", placeholder: "Limit: 350 characters." },
+    { id: "primaryView", label: "Primary View", kind: "select", required: true, options: primaryViewOptions },
+    { id: "constructionActive", label: "Nearby Active Construction / Renovation?", kind: "select", required: true, options: yesNoUnknownOptions },
     { id: "constructionReasonShort", label: "Construction / Renovation Notes", kind: "textarea", placeholder: "Limit: 350 characters." },
     { id: "contextDescription", label: "Comprehensive Setting and View Summary", kind: "textarea", placeholder: "Suggested: 150-400 characters." },
 
@@ -128,43 +212,44 @@ export const pcrInteriorForm: LocalFormDefinition = {
     { id: "knownViolationsExplain", label: "Violations Explanation", kind: "textarea", placeholder: "Type of violation, notice number/source, approximate date." },
     { id: "knownFloodZone", label: "Is the property within a known Flood Zone?", kind: "select", options: yesNoUnknownOptions },
     { id: "knownFloodZoneExplain", label: "Known Flood Zone Explanation", kind: "textarea", placeholder: "FEMA zone, FIRM/MSC source, panel/date if known." },
+    { id: "publicRecordsDisclaimer", label: "Public Records and Use Disclaimer", kind: "divider", placeholder: "Public-record lookups in this report are a good-faith snapshot from available sources and are not a code inspection, engineering report, legal opinion, or flood certification. Verify with the authority having jurisdiction and consult qualified professionals as needed." },
 
     { id: "overallConditionDivider", label: "Overall Condition Rating", kind: "divider", placeholder: "Overall property condition across interior and exterior observations." },
-    { id: "overallConditionRating", label: "Overall Condition Rating", kind: "select", required: true, options: ["Excellent", "Good", "Average", "Fair", "Poor", "Damaged", "N/A"], fullWidth: true },
-    { id: "overallConditionNotes", label: "Overall Condition Notes", kind: "textarea", placeholder: "Brief explanation required if Fair, Poor, Damaged, or N/A." },
+    { id: "overallConditionRating", label: "Overall Condition", kind: "select", required: true, options: overallConditionOptions, fullWidth: true },
+    { id: "overallConditionNotes", label: "Explanation for Rating (required if Fair, Poor, Damaged, or N/A)", kind: "textarea", placeholder: "Max 1200 characters." },
 
     { id: "exteriorConditionDivider", label: "Exterior Condition", kind: "divider", placeholder: "Rate observed exterior components and summarize visible condition." },
-    { id: "overallExteriorCondition", label: "Overall Exterior Condition", kind: "select", required: true, options: ["C1 - New / Recently Renovated", "C2 - Well Maintained", "C3 - Average / Typical", "C4 - Fair / Deferred Maintenance", "C5 - Poor / Significant Repairs Needed", "C6 - Severe Damage / Unsafe", "Unknown / Not Inspected"], fullWidth: true },
-    { id: "overallExteriorConditionExplain", label: "Overall Exterior Condition Explanation", kind: "textarea", placeholder: "Explain the selected overall exterior condition." },
-    { id: "siteGroundsRating", label: "Condition Rating (Site and Grounds)", kind: "select", required: true, options: exteriorConditionOptions },
-    { id: "siteGroundsExplain", label: "Site and Grounds Explanation", kind: "textarea", placeholder: "Landscaping, grading, retaining walls, fencing, debris, standing water, etc." },
-    { id: "exteriorStructureRating", label: "Condition Rating (Exterior Structure and Components)", kind: "select", required: true, options: exteriorConditionOptions },
-    { id: "exteriorStructureExplain", label: "Exterior Structure and Components Explanation", kind: "textarea", placeholder: "Siding, masonry, trim, foundation exposure, gutters, visible damage, etc." },
-    { id: "roofSystemRating", label: "Condition Rating (Roof System)", kind: "select", required: true, options: exteriorConditionOptions },
-    { id: "roofSystemExplain", label: "Roof System Explanation", kind: "textarea", placeholder: "Roof covering, flashing, visible sagging, missing shingles, gutters, etc." },
-    { id: "entryOpeningsRating", label: "Condition Rating (Entry and Exterior Openings)", kind: "select", required: true, options: exteriorConditionOptions },
-    { id: "entryOpeningsExplain", label: "Entry and Exterior Openings Explanation", kind: "textarea", placeholder: "Doors, windows, frames, steps, porch, railing, garage doors, etc." },
+    { id: "overallExteriorCondition", label: "Overall Exterior Condition Rating", kind: "select", required: true, options: overallConditionOptions, fullWidth: true },
+    { id: "overallExteriorConditionExplain", label: "Brief explanation (required if Fair, Poor, or Damaged)", kind: "textarea", placeholder: "Suggested: 75-200 characters." },
+    { id: "siteGroundsRating", label: "Condition Rating (Site and Grounds)", kind: "select", required: true, options: componentConditionOptions },
+    { id: "siteGroundsExplain", label: "Site and Grounds Explanation", kind: "textarea", placeholder: "Sidewalks, driveways, landscaping, grading, retaining walls, fencing, etc." },
+    { id: "exteriorStructureRating", label: "Condition Rating (Exterior Structure)", kind: "select", required: true, options: componentConditionOptions },
+    { id: "exteriorStructureExplain", label: "Exterior Structure Explanation", kind: "textarea", placeholder: "Walls, siding, trim, foundation, soffit, fascia, garage structure, etc." },
+    { id: "roofSystemRating", label: "Condition Rating (Roof System)", kind: "select", required: true, options: componentConditionOptions },
+    { id: "roofSystemExplain", label: "Roof System Explanation", kind: "textarea", placeholder: "Roofing material, chimneys, gutters, downspouts, vents, etc." },
+    { id: "entryOpeningsRating", label: "Condition Rating (Entry and Openings)", kind: "select", required: true, options: componentConditionOptions },
+    { id: "entryOpeningsExplain", label: "Entry and Openings Explanation", kind: "textarea", placeholder: "Steps/porch, doors, windows, exterior lighting, outlets, hose bibs, etc." },
 
     { id: "commonAreaInspectionDivider", label: "Common Area Inspection", kind: "divider", placeholder: "Assess shared areas and amenities when available for inspection.", visibleWhen: associationVisible },
     { id: "commonAreaOverallCondition", label: "Overall Condition of Common Areas and Amenities", kind: "select", options: commonAreaConditionOptions, fullWidth: true, visibleWhen: associationVisible },
-    { id: "commonAreaSummary", label: "Overall Condition of Common Areas and Amenities - Summary", kind: "textarea", placeholder: "Significant observations, deferred maintenance, or safety concerns.", visibleWhen: associationVisible },
+    { id: "commonAreaSummary", label: "Overall Condition of Common Areas and Amenities - Summary", kind: "textarea", placeholder: "Suggested: 150-400 characters.", visibleWhen: associationVisible },
     { id: "commonAreasCondition", label: "Common Areas", kind: "select", options: commonAreaConditionOptions, visibleWhen: associationVisible },
-    { id: "commonAreasNotes", label: "Common Area Notes", kind: "textarea", placeholder: "Lobbies, corridors, clubhouse, mailroom, etc.", visibleWhen: associationVisible },
+    { id: "commonAreasNotes", label: "Common Area Notes", kind: "textarea", placeholder: "Max 200 characters.", visibleWhen: associationVisible },
     { id: "parkingAreaCondition", label: "Parking Area", kind: "select", options: commonAreaConditionOptions, visibleWhen: associationVisible },
-    { id: "parkingAreaNotes", label: "Parking Area Notes", kind: "textarea", placeholder: "Lot/garage condition, striping, lighting, access, signage.", visibleWhen: associationVisible },
+    { id: "parkingAreaNotes", label: "Parking Area Notes", kind: "textarea", placeholder: "Max 200 characters.", visibleWhen: associationVisible },
     { id: "poolAreaCondition", label: "Pool", kind: "select", options: commonAreaConditionOptions, visibleWhen: associationVisible },
-    { id: "poolAreaNotes", label: "Pool Area Notes", kind: "textarea", placeholder: "Fencing, deck surface, visible maintenance; leave blank if N/A.", visibleWhen: associationVisible },
+    { id: "poolAreaNotes", label: "Pool Area Notes", kind: "textarea", placeholder: "Max 200 characters.", visibleWhen: associationVisible },
     { id: "extraAmenitiesCondition", label: "Extra Amenities", kind: "select", options: commonAreaConditionOptions, visibleWhen: associationVisible },
-    { id: "extraAmenitiesNotes", label: "Extra Amenities Notes", kind: "textarea", placeholder: "Gym, community room, playground, courtyard, etc.", visibleWhen: associationVisible },
+    { id: "extraAmenitiesNotes", label: "Extra Amenities Notes", kind: "textarea", placeholder: "Max 200 characters.", visibleWhen: associationVisible },
     { id: "elevatorCondition", label: "Elevator", kind: "select", options: commonAreaConditionOptions, visibleWhen: associationVisible },
-    { id: "elevatorNotes", label: "Elevator Notes", kind: "textarea", placeholder: "Operational status not tested; call panel condition; signage.", visibleWhen: associationVisible },
+    { id: "elevatorNotes", label: "Elevator Notes", kind: "textarea", placeholder: "Max 200 characters.", visibleWhen: associationVisible },
     { id: "securityCondition", label: "Security", kind: "select", options: commonAreaConditionOptions, visibleWhen: associationVisible },
-    { id: "securityNotes", label: "Security Notes", kind: "textarea", placeholder: "Cameras, intercoms, access control, gate/door hardware.", visibleWhen: associationVisible },
+    { id: "securityNotes", label: "Security Notes", kind: "textarea", placeholder: "Max 200 characters.", visibleWhen: associationVisible },
 
     { id: "interiorConditionDivider", label: "Interior Condition and Level Details", kind: "divider", placeholder: "Document overall interior condition, levels, rooms, room counts, and room-level notes." },
-    { id: "overallInteriorCondition", label: "Overall Interior Condition Rating", kind: "select", required: true, options: conditionOptions, fullWidth: true },
-    { id: "overallInteriorConditionNotes", label: "Overall Interior Condition Notes", kind: "textarea", placeholder: "Brief explanation required if Fair, Poor, Damaged, or N/A." },
-    { id: "interiorLevels", label: "Number of Levels", kind: "number", required: true, placeholder: "1" },
+    { id: "overallInteriorCondition", label: "Overall Interior Condition Rating", kind: "select", required: true, options: overallConditionOptions, fullWidth: true },
+    { id: "overallInteriorConditionNotes", label: "Brief explanation (required if Fair, Poor, Damaged, or N/A)", kind: "textarea", placeholder: "Suggested: 80-200 characters." },
+    { id: "interiorLevels", label: "Number of Levels", kind: "number", required: true, placeholder: "Range: 1-8" },
     { id: "totalRooms", label: "No. of Rooms (Total)", kind: "number" },
     { id: "totalBedrooms", label: "No. of Bedrooms", kind: "number" },
     { id: "totalFullBaths", label: "Full Baths", kind: "number" },
@@ -176,10 +261,10 @@ export const pcrInteriorForm: LocalFormDefinition = {
       minItems: 1,
       addButtonLabel: "Add Level",
       fields: [
-        { id: "title", label: "Level Title", kind: "select", required: true, options: ["Basement/Foundation", "First Floor Level", "Second Floor Level", "Third Floor Level", "Fourth Floor Level", "Fifth Floor Level", "Roof Top Level", "Other"] },
-        { id: "condition", label: "Level Condition", kind: "select", required: true, options: conditionOptions },
+        { id: "title", label: "Level Title", kind: "select", required: true, options: levelOptions },
+        { id: "condition", label: "Level Condition", kind: "select", required: true, options: overallConditionOptions },
         { id: "otherTitle", label: "If Other, Level Name", kind: "text", placeholder: "e.g., Mezzanine" },
-        { id: "notes", label: "Level Notes", kind: "textarea", placeholder: "Summarize finish quality, moisture evidence, ceiling/wall/floor condition, trim/doors, etc." }
+        { id: "notes", label: "Level Notes", kind: "textarea", placeholder: "Suggested: 80-200 characters." }
       ]
     },
     {
@@ -189,19 +274,19 @@ export const pcrInteriorForm: LocalFormDefinition = {
       minItems: 1,
       addButtonLabel: "Add Room",
       fields: [
-        { id: "level", label: "Level", kind: "select", required: true, options: ["Basement/Foundation", "First Floor Level", "Second Floor Level", "Third Floor Level", "Fourth Floor Level", "Fifth Floor Level", "Roof Top Level", "Other"] },
+        { id: "level", label: "Level", kind: "select", required: true, options: levelOptions },
         { id: "type", label: "Room Type", kind: "select", required: true, options: ["Living Room", "Family Room", "Dining Room", "Kitchen", "Bedroom", "Full Bath", "Half Bath", "Laundry/Utility", "Office/Den", "Hall/Closet", "Other"] },
         { id: "name", label: "Room Name", kind: "text", placeholder: "e.g., Primary Bedroom, Front Living" },
-        { id: "condition", label: "Room Condition", kind: "select", required: true, options: conditionOptions },
-        { id: "notes", label: "Room Notes", kind: "textarea", placeholder: "Required if below Average. Note worn flooring, missing GFCI, moisture staining, etc." }
+        { id: "condition", label: "Room Condition", kind: "select", required: true, options: overallConditionOptions },
+        { id: "notes", label: "Room Notes", kind: "textarea", placeholder: "Required if below Average." }
       ]
     },
 
     { id: "repairsDivider", label: "Recent Repairs and Upgrades", kind: "divider", placeholder: "Document recent kitchen/bath updates, major repairs, and individual repair or upgrade items." },
     { id: "recentKitchenBath", label: "Major updates to kitchen and/or bathrooms within the last 10 years?", kind: "select", required: true, options: ["Yes", "No"] },
-    { id: "recentKitchenBathExplain", label: "Kitchen / Bath Update Explanation", kind: "textarea", placeholder: "e.g., Kitchen remodeled 2019; hall bath updated 2021." },
+    { id: "recentKitchenBathExplain", label: "If Yes, please explain", kind: "textarea", placeholder: "Suggested: 100-300 characters." },
     { id: "recentMajorUpdate", label: "Major updates or repairs within the last 5 years?", kind: "select", required: true, options: ["Yes", "No"] },
-    { id: "recentMajorUpdateExplain", label: "Major Update / Repair Explanation", kind: "textarea", placeholder: "e.g., New roof 2023, HVAC 2022, electrical panel upgrade 2021." },
+    { id: "recentMajorUpdateExplain", label: "If Yes, please explain", kind: "textarea", placeholder: "Suggested: 100-300 characters." },
     {
       id: "repairItems",
       label: "Individual Repairs / Upgrades",
@@ -209,7 +294,7 @@ export const pcrInteriorForm: LocalFormDefinition = {
       addButtonLabel: "Add Repair / Upgrade",
       fields: [
         { id: "category", label: "Category", kind: "select", options: ["Roof", "Exterior/Siding", "Windows/Doors", "Foundation/Structure", "HVAC", "Electrical", "Plumbing", "Kitchen", "Bathroom", "Flooring", "Interior/Finish", "Appliances", "Landscaping/Site", "Other"] },
-        { id: "description", label: "Description", kind: "text", placeholder: "e.g., Replace 30-yr architectural shingles" },
+        { id: "description", label: "Description", kind: "text" },
         { id: "cost", label: "Cost ($)", kind: "number", placeholder: "0.00" }
       ]
     },
@@ -217,11 +302,11 @@ export const pcrInteriorForm: LocalFormDefinition = {
 
     { id: "healthSafetyDivider", label: "Health and Safety", kind: "divider", placeholder: "Immediate concerns related to potential harm, code compliance, or external factors." },
     { id: "visibleHazards", label: "Visible hazards (loose steps, missing railings, unsafe entry)?", kind: "select", required: true, options: yesNoNaOptions },
-    { id: "visibleHazardsNotes", label: "Visible Hazards Notes / Details", kind: "textarea", placeholder: "e.g., Missing handrail at front steps; loose paver at walkway." },
+    { id: "visibleHazardsNotes", label: "Visible Hazards Notes / Details", kind: "textarea", placeholder: "Notes recommended if you select Yes. Max 200 characters." },
     { id: "visibleCodeViolations", label: "Visible code violations?", kind: "select", required: true, options: yesNoNaOptions },
-    { id: "visibleCodeViolationsNotes", label: "Visible Code Violations Notes / Details", kind: "textarea", placeholder: "e.g., Exposed wiring, unsafe exterior condition, visible municipal notice." },
+    { id: "visibleCodeViolationsNotes", label: "Visible Code Violations Notes / Details", kind: "textarea", placeholder: "Notes recommended if you select Yes. Max 200 characters." },
     { id: "exteriorOdors", label: "Obvious exterior odors present?", kind: "select", required: true, options: yesNoNaOptions },
-    { id: "exteriorOdorsNotes", label: "Exterior Odors Notes / Details", kind: "textarea", placeholder: "e.g., Industrial, landfill, stagnant water, petroleum, sewer." },
-    { id: "healthSafetySummary", label: "Health & Safety Summary", kind: "textarea", placeholder: "Concise summary of critical concerns, locations, and immediate recommendations." }
+    { id: "exteriorOdorsNotes", label: "Exterior Odors Notes / Details", kind: "textarea", placeholder: "Notes recommended if you select Yes. Max 200 characters." },
+    { id: "healthSafetySummary", label: "Health & Safety Summary", kind: "textarea", placeholder: "Suggested: 120-300 characters." }
   ]
 };

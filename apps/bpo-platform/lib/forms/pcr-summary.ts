@@ -27,7 +27,7 @@ const futureUseVisible = { fieldId: "futureUseAssessed", values: ["Yes"] };
 
 export const pcrSummaryForm: LocalFormDefinition = {
   id: "pcr-summary",
-  title: "PCR Summary",
+  title: "Property Condition Report (PCR) Summary",
   category: "Property Condition Report (PCR)",
   description: "Client-ready synthesis of current condition, financing likelihood, association risks, future use, feasibility, and final recommendations.",
   fields: [
@@ -50,6 +50,7 @@ export const pcrSummaryForm: LocalFormDefinition = {
 
     { id: "financingDivider", label: "Financing Assessment", kind: "divider", placeholder: "Assess the property's condition relative to common lender requirements." },
     { id: "financingType", label: "Most likely financing available?", kind: "select", required: true, options: ["Conventional", "FHA Standard", "FHA 203(k)", "VA", "USDA", "Cash", "Owner/Seller Financing", "Other"] },
+    { id: "financingTypeOther", label: "Other Financing Type", kind: "text", required: true, placeholder: "Describe the likely financing type.", visibleWhen: { fieldId: "financingType", values: ["Other"] } },
     { id: "financingTypeExplain", label: "Financing Explanation", kind: "textarea", placeholder: "Explain the reasoning for the selected financing type." },
     { id: "financingMeetsStandards", label: "Does property meet FHA/lender standards?", kind: "select", required: true, options: yesNoNaOptions },
     { id: "financingDeficienciesExplain", label: "If not, explain deficiencies", kind: "textarea", placeholder: "e.g., Peeling paint, missing handrails..." },
@@ -76,9 +77,9 @@ export const pcrSummaryForm: LocalFormDefinition = {
     { id: "feasTotalCost", label: "Total Estimated Repair / Rehab / Development Cost ($)", kind: "text", required: true, placeholder: "e.g., 85,000", fullWidth: true, visibleWhen: futureUseVisible },
     { id: "feasValueCurrent", label: "Estimated Current Value ($)", kind: "text", required: true, placeholder: "e.g., 150,000", visibleWhen: futureUseVisible },
     { id: "feasValueArv", label: "Estimated After Completion (ARV) Value ($)", kind: "text", required: true, placeholder: "e.g., 225,000", visibleWhen: futureUseVisible },
-    { id: "feasGrossGain", label: "Gross Value Gain (ARV - Current)", kind: "text", placeholder: "Calculated or entered value", visibleWhen: futureUseVisible },
-    { id: "feasNetProfit", label: "Net Project Profit (Gross Gain - Cost)", kind: "text", placeholder: "Calculated or entered value", visibleWhen: futureUseVisible },
-    { id: "feasRoi", label: "Estimated ROI", kind: "text", placeholder: "e.g., 18.5%", visibleWhen: futureUseVisible },
+    { id: "feasGrossGain", label: "Gross Value Gain (ARV - Current)", kind: "text", placeholder: "Calculated automatically", visibleWhen: futureUseVisible },
+    { id: "feasNetProfit", label: "Net Project Profit (ARV - Current - Cost)", kind: "text", placeholder: "Calculated automatically", visibleWhen: futureUseVisible },
+    { id: "feasRoi", label: "Estimated ROI", kind: "text", placeholder: "Calculated automatically", visibleWhen: futureUseVisible },
     { id: "feasibilityAssessment", label: "Financial Feasible Assessment", kind: "select", required: true, options: ["Financially Feasible", "Feasibility is Contingent to Specified Conditions", "Not Financially Feasible"], visibleWhen: futureUseVisible },
     { id: "recommendation", label: "Recommended Action", kind: "select", options: ["Proceed", "Proceed with Conditions", "Do Not Proceed"], visibleWhen: futureUseVisible },
     { id: "feasibilitySummary", label: "Feasibility Summary", kind: "textarea", placeholder: "Summarize the financial reasoning.", visibleWhen: futureUseVisible },

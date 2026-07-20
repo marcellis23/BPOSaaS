@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { deleteReportAction, updateAgentProfileAction, updateBrokerProfileAction } from "../actions";
+import { updateAgentProfileAction, updateBrokerProfileAction } from "../actions";
+import { DeleteProjectForm } from "../../components/DeleteProjectForm";
 import { SubmitButton } from "../../components/SubmitButton";
 import { requireUser } from "../../lib/auth";
 import { stateOptions } from "../../lib/forms/cover-page";
@@ -47,7 +48,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <div className="card overflow-hidden">
             <div className="flex flex-col justify-between gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center">
               <div>
-                <h2 className="font-bold text-slate-950">Active projects</h2>
+                <h2 className="font-bold text-blue-700">Active projects</h2>
                 <p className="mt-1 text-sm text-slate-600">Open a report to continue forms, or delete reports you no longer need.</p>
               </div>
               <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{projects.length} reports</span>
@@ -69,10 +70,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                           <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold capitalize text-slate-700">
                             {project.status.replaceAll("_", " ")}
                           </span>
-                          <form action={deleteReportAction}>
-                            <input type="hidden" name="projectId" value={project.id} />
-                            <SubmitButton variant="danger">Delete</SubmitButton>
-                          </form>
+                          <DeleteProjectForm projectId={project.id} />
                         </div>
                       </div>
                     </article>
@@ -89,7 +87,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
         <aside className="space-y-6">
           <section className="card p-5">
-            <h2 className="font-bold text-slate-950">Membership</h2>
+            <h2 className="font-bold text-blue-700">Membership</h2>
             <dl className="mt-4 space-y-3 text-sm">
               <div className="flex justify-between gap-4">
                 <dt className="text-slate-600">Type</dt>
@@ -112,7 +110,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
           <form action={updateAgentProfileAction} className="card space-y-4 p-5">
             <div>
-              <h2 className="font-bold text-slate-950">Agent information</h2>
+              <h2 className="font-bold text-blue-700">Agent information</h2>
               <p className="mt-1 text-sm text-slate-600">Used for your dashboard profile and report cover pages.</p>
             </div>
             <input name="name" defaultValue={user.name} required placeholder="Agent name" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
@@ -126,7 +124,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
           <form action={updateBrokerProfileAction} className="card space-y-4 p-5">
             <div>
-              <h2 className="font-bold text-slate-950">Broker information</h2>
+              <h2 className="font-bold text-blue-700">Broker information</h2>
               <p className="mt-1 text-sm text-slate-600">Saved brokerage details can prefill report cover pages.</p>
             </div>
             <input name="brokerageName" defaultValue={user.brokerageName} placeholder="Brokerage name" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />

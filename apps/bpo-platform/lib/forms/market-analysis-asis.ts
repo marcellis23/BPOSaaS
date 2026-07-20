@@ -1,11 +1,12 @@
 import type { LocalFormDefinition } from "./types";
 import { stateOptions } from "./cover-page";
+import { submarketAnalysisAsIsForm } from "./submarket-analysis-asis";
 
 export const marketAnalysisAsIsForm: LocalFormDefinition = {
   id: "market-analysis-asis",
-  title: "Market Analysis (As-Is)",
+  title: "Market Analysis Report (MAR)",
   category: "Market Analysis Report (MAR)",
-  description: "Neighborhood land use, housing stock comparisons, economic influences, sales activity, and rental trends.",
+  description: "Subject overview, market area trends, submarket definition, pricing segmentation, rental analysis, and target buyer profile.",
   fields: [
     { id: "subjectPropertyOverviewDivider", label: "Subject Property Overview", kind: "divider", placeholder: "Confirm the core property details and current condition as supported by the Property Condition Report (PCR)." },
     { id: "address", label: "Property Address", kind: "text", required: true, placeholder: "123 Main St", layoutSpan: 3 },
@@ -164,6 +165,8 @@ export const marketAnalysisAsIsForm: LocalFormDefinition = {
     { id: "rent_active_avg_dom", label: "Average DOM", kind: "text", layoutSpan: 2 },
     { id: "rent_active_summary", label: "Summary of Active Rental Listing Activity", kind: "textarea" },
     { id: "rent_other_types_summary", label: "Summary of Other Rental Listing Types Activity", kind: "textarea" },
-    { id: "rent_market_activity_summary", label: "Summarize the Rental market activity for the market area", kind: "textarea" }
+    { id: "rent_market_activity_summary", label: "Summarize the Rental market activity for the market area", kind: "textarea" },
+
+    ...submarketAnalysisAsIsForm.fields
   ]
 };

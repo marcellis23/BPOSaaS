@@ -65,7 +65,7 @@ const includeInteriorVisible = { fieldId: "includeInteriorRepairs", values: ["Ye
 
 export const repairRenovEstimateForm: LocalFormDefinition = {
   id: "repair-renov-estimate",
-  title: "Repair / Renovation Estimate",
+  title: "Repair Estimate (Contributory Value Assessment)",
   category: "Construction, Renovation, & Repair Cost",
   description: "Exterior and optional interior repair estimate with contributory value and feasibility assessment.",
   fields: [
@@ -82,10 +82,11 @@ export const repairRenovEstimateForm: LocalFormDefinition = {
     { id: "currentCondition", label: "Current condition of the subject property", kind: "select", required: true, options: currentConditionOptions },
     { id: "postRepairCondition", label: "Condition rating after recommended repairs", kind: "select", required: true, options: postRepairConditionOptions },
 
-    { id: "marketSupportDivider", label: "Project Repair Summary & Market Support", kind: "divider", placeholder: "Connect the repair plan to neighborhood market expectations and value impact." },
+    { id: "marketSupportDivider", label: "Project Repair Summary & Market Support", kind: "divider", placeholder: "Connect the repair plan to neighborhood market expectations, curb appeal, buyer expectations, resale value, feasibility, ARV, and marketing strategy." },
     { id: "projectSummary", label: "Overall Repair Summary (scope & intent)", kind: "textarea", placeholder: "Summarize key issues observed and the intended scope of work." },
     { id: "marketSupportNarrative", label: "Market Support (Condition & Scope Narrative)", kind: "textarea", placeholder: "Explain how current condition compares to nearby homes and how proposed repairs align with market expectations." },
-    { id: "scopeNotice", label: "Scope of Assessment Notes", kind: "textarea", placeholder: "Optional notes about visual/non-invasive assessment limits, contractor bids, or scope assumptions." },
+    { id: "scopeNoticeDivider", label: "Important Notice: Scope of Assessment", kind: "divider", placeholder: "This is a limited, visual, and non-invasive assessment for property assessment purposes only. Repair costs are planning-level estimates and are subject to change based on contractor bids, code requirements, and detailed inspections." },
+    { id: "scopeNotice", label: "Scope of Assessment Notes", kind: "textarea", placeholder: "Optional notes about visual/non-invasive assessment limits, contractor bids, code requirements, detailed inspections, or scope assumptions." },
 
     { id: "exteriorRepairsDivider", label: "Exterior Repair Estimates", kind: "divider", placeholder: "Exterior-only repair items observed during inspection." },
     {
@@ -100,7 +101,7 @@ export const repairRenovEstimateForm: LocalFormDefinition = {
         { id: "cost", label: "Est. Cost ($)", kind: "number", required: true, placeholder: "0.00" }
       ]
     },
-    { id: "totalExteriorCost", label: "Total Cost of Estimated Exterior Repairs", kind: "number", placeholder: "0.00" },
+    { id: "totalExteriorCost", label: "Total Cost of Estimated Exterior Repairs", kind: "text", placeholder: "$0.00", readOnly: true },
 
     { id: "interiorRepairsDivider", label: "Interior Repair Estimates", kind: "divider", placeholder: "Use when interior access was available and interior repair items should be included." },
     { id: "includeInteriorRepairs", label: "Does this report include an interior repair assessment?", kind: "select", required: true, options: ["Yes", "No"], fullWidth: true },
@@ -116,10 +117,10 @@ export const repairRenovEstimateForm: LocalFormDefinition = {
         { id: "cost", label: "Est. Cost ($)", kind: "number", required: true, placeholder: "0.00" }
       ]
     },
-    { id: "totalInteriorCost", label: "Total Cost of Estimated Interior Repairs", kind: "number", placeholder: "0.00", visibleWhen: includeInteriorVisible },
+    { id: "totalInteriorCost", label: "Total Cost of Estimated Interior Repairs", kind: "text", placeholder: "$0.00", readOnly: true, visibleWhen: includeInteriorVisible },
 
     { id: "totalRepairDivider", label: "Total Repair Cost Summary", kind: "divider", placeholder: "Combined exterior and interior repair estimate used for feasibility and value-impact calculations." },
-    { id: "totalCost", label: "Total Cost of Estimated Repairs (Interior & Exterior)", kind: "number", required: true, placeholder: "0.00", fullWidth: true },
+    { id: "totalCost", label: "Total Cost of Estimated Repairs (Interior & Exterior)", kind: "text", required: true, placeholder: "$0.00", fullWidth: true, readOnly: true },
 
     { id: "currentValueDivider", label: "Estimated Current Value - Comparable Evidence", kind: "divider", placeholder: "Establish the before value using current/as-is comparable evidence." },
     { id: "estimatedCurrentValue", label: "Estimated Current Value ($)", kind: "number", placeholder: "125000" },
@@ -134,8 +135,8 @@ export const repairRenovEstimateForm: LocalFormDefinition = {
     { id: "feasibilityDivider", label: "Feasibility & Contributory Value Inputs", kind: "divider", placeholder: "Connect total repair cost to current and after-repair values to model value gain, net contributory value, and ROI." },
     { id: "valueCurrent", label: "Current Condition Value ($)", kind: "number", placeholder: "0.00" },
     { id: "valueAfterRepair", label: "After-Repair ARV Estimate ($)", kind: "number", placeholder: "0.00" },
-    { id: "roi", label: "Estimated ROI", kind: "text", placeholder: "0.00%" },
-    { id: "grossValueGain", label: "Gross Value Gain", kind: "number", placeholder: "0.00" },
-    { id: "contributoryValue", label: "Net Contributory Value", kind: "number", placeholder: "0.00" }
+    { id: "roi", label: "Estimated ROI", kind: "text", placeholder: "0.00%", readOnly: true },
+    { id: "grossValueGain", label: "Gross Value Gain", kind: "text", placeholder: "$0.00", readOnly: true },
+    { id: "contributoryValue", label: "Net Contributory Value", kind: "text", placeholder: "$0.00", readOnly: true }
   ]
 };

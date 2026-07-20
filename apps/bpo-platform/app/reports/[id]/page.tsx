@@ -130,7 +130,7 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
         <aside className="space-y-6">
           <form action={updateProjectAction} className="card space-y-4 p-5">
             <input type="hidden" name="projectId" value={project.id} />
-            <h2 className="font-bold text-slate-950">Shared report data</h2>
+            <h2 className="font-bold text-blue-700">Shared report data</h2>
             <input name="title" defaultValue={project.title} required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
             <select name="reportType" defaultValue={project.reportType} required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
               {reportTypes.map((type) => <option value={type} key={type}>{type}</option>)}
@@ -150,7 +150,7 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
               }}
             />
             <div className="border-t border-slate-200 pt-4">
-              <h3 className="text-sm font-bold text-slate-950">Subject property</h3>
+              <h3 className="text-sm font-bold text-blue-700">Subject property</h3>
             </div>
             <input name="address" defaultValue={property?.address} required placeholder="Address" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
             <input name="unit" defaultValue={property?.unit} placeholder="Unit" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
@@ -164,7 +164,7 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
               {propertyTypeOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
             </select>
             <div className="border-t border-slate-200 pt-4">
-              <h3 className="text-sm font-bold text-slate-950">Guided questions</h3>
+              <h3 className="text-sm font-bold text-blue-700">Guided questions</h3>
               <p className="mt-1 text-xs text-slate-500">These describe why this package was recommended.</p>
             </div>
             <select name="assignmentIntent" defaultValue={project.assignmentIntent ?? "general_bpo"} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
@@ -187,7 +187,7 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
           <form action={updateFormPlanAction} className="card space-y-4 p-5">
             <input type="hidden" name="projectId" value={project.id} />
             <div>
-              <h2 className="font-bold text-slate-950">Form package</h2>
+              <h2 className="font-bold text-blue-700">Form package</h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">{selectedCatalogForms.length} selected forms · {completedLocalCount} completed locally · {uploadedCount} PDFs uploaded</p>
             </div>
             {allCatalogGroupEntries.map(([category, forms]) => (
@@ -215,7 +215,7 @@ export default async function ReportBuilderPage({ params }: { params: Promise<{ 
             <div className="flex flex-col justify-between gap-3 border-b border-slate-200 pb-4 sm:flex-row">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Guided builder</p>
-                <h2 className="mt-1 text-xl font-bold text-slate-950">Recommended form workflow</h2>
+                <h2 className="mt-1 text-xl font-bold text-blue-700">Recommended form workflow</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
                   Complete each selected form inside the app. You can still attach outside PDFs when needed, but local forms are now the primary workflow.
                 </p>

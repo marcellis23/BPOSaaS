@@ -85,6 +85,7 @@ function FormattedInput({
   kind,
   className,
   id,
+  readOnly,
 }: {
   name: string;
   value: string;
@@ -95,6 +96,7 @@ function FormattedInput({
   kind: string;
   className: string;
   id: string;
+  readOnly?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
   const [localValue, setLocalValue] = useState(value);
@@ -186,6 +188,7 @@ function FormattedInput({
         onFocus={handleFocus}
         onBlur={handleBlur}
         required={required}
+        readOnly={readOnly}
         placeholder={placeholder}
         type={focused && (isCurrency || isPercent) ? "number" : kind}
         className={className}
@@ -256,7 +259,8 @@ export function FieldControl({ field, value = "", onChange, onSelectAddress }: F
   }
 
   const isCalculatedPct = field.id === "lu_mix_total_pct" || field.id === "occ_total_pct";
-  const isReadOnly = isCalculatedPct || field.id === "ma_distressed_total" || field.id === "ma_distressed_pct" || field.id === "sm_distressed_pct";
+  const isCalculatedFeasibility = field.id === "feasGrossGain" || field.id === "feasNetProfit" || field.id === "feasRoi";
+  const isReadOnly = Boolean(field.readOnly) || isCalculatedPct || isCalculatedFeasibility || field.id === "ma_distressed_total" || field.id === "ma_distressed_pct" || field.id === "sm_distressed_pct";
 
   let computedClass = baseClass;
   if (isReadOnly) {
@@ -349,6 +353,7 @@ export function FieldControl({ field, value = "", onChange, onSelectAddress }: F
           kind={field.kind}
           className={computedClass}
           id={field.id}
+          readOnly={isReadOnly}
         />
       )}
     </label>
@@ -378,6 +383,7 @@ function RepeaterControl({
   });
 
   const handleAdd = () => {
+    if (field.maxItems && items.length >= field.maxItems) return;
     const newItems = [...items, { id: String(nextId) }];
     setItems(newItems);
     setNextId((current) => current + 1);
@@ -482,16 +488,20 @@ function RepeaterControl({
         ))}
       </div>
 
-      <button
-        type="button"
-        onClick={handleAdd}
-        className="mt-4 inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-2 h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-        </svg>
-        {field.addButtonLabel || "Add Item"}
-      </button>
+      {field.maxItems && items.length >= field.maxItems ? (
+        <p className="mt-3 text-xs font-medium text-slate-500">Maximum of {field.maxItems} items reached.</p>
+      ) : (
+        <button
+          type="button"
+          onClick={handleAdd}
+          className="mt-4 inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-2 h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+          </svg>
+          {field.addButtonLabel || "Add Item"}
+        </button>
+      )}
     </div>
   );
 }

@@ -48,10 +48,18 @@ const constructionCategories = [
   "Post-Construction & Compliance",
   "Financing & Carrying Costs"
 ];
+const compStatusOptions = ["Sold", "Active", "Pending"];
+const comparableEvidenceFields = [
+  { id: "address", label: "Address / Development Name", kind: "text" as const, placeholder: "Address / Dev name", fullWidth: true },
+  { id: "status", label: "Status", kind: "select" as const, options: compStatusOptions },
+  { id: "price", label: "Price ($)", kind: "number" as const, placeholder: "Price" },
+  { id: "date", label: "Date", kind: "date" as const },
+  { id: "notes", label: "Notes", kind: "textarea" as const, placeholder: "Beds/baths/sf, finish, distance, similarity, and adjustments.", fullWidth: true }
+];
 
 export const constructionCostsForm: LocalFormDefinition = {
   id: "construction-costs",
-  title: "Construction Costs",
+  title: "Construction Cost Estimate - Lot Development",
   category: "Construction, Renovation, & Repair Cost",
   description: "Lot development construction costs, comparable evidence, current and after-completion values, and feasibility inputs.",
   fields: [
@@ -88,23 +96,39 @@ export const constructionCostsForm: LocalFormDefinition = {
         { id: "cost", label: "Est. Cost ($)", kind: "number", required: true, placeholder: "0.00" }
       ]
     },
-    { id: "totalCost", label: "Total Estimated Development Cost", kind: "number", required: true, placeholder: "0.00" },
+    { id: "totalCost", label: "Total Estimated Development Cost", kind: "text", required: true, placeholder: "$0.00", readOnly: true },
 
-    { id: "currentValueDivider", label: "Estimated Current Value - Comparable Evidence", kind: "divider", placeholder: "Enter estimated current value, data sources, and justification supporting the subject's current-condition value." },
+    { id: "currentValueDivider", label: "Estimated Current Value - Comparable Evidence (Current Condition)", kind: "divider", placeholder: "Add 1-5 references (sold/active) supporting the subject's current condition value." },
+    {
+      id: "currentValueComps",
+      label: "Current Condition Comparable References",
+      kind: "repeater",
+      maxItems: 5,
+      addButtonLabel: "Add Comp",
+      fields: comparableEvidenceFields
+    },
     { id: "estimatedCurrentValue", label: "Estimated Current Value ($)", kind: "number", placeholder: "125000" },
     { id: "marketSources", label: "Data Sources / Notes", kind: "text", placeholder: "Bright MLS, public records, builder bid letters, etc." },
-    { id: "estimatedCurrentJustification", label: "Justification Summary", kind: "textarea", placeholder: "Explain how sources/market data support your current-condition value." },
+    { id: "estimatedCurrentJustification", label: "Justification Summary", kind: "textarea", placeholder: "Explain how these comps support your current-condition value, including PPSF, condition, location, time, and relevant adjustments." },
 
-    { id: "afterCompletionDivider", label: "Estimated After Completion Value - Comparable Evidence", kind: "divider", placeholder: "Enter estimated after-completion value, data sources, and justification supporting the proposed plan." },
+    { id: "afterCompletionDivider", label: "Est. After Completion Value - Comparable Evidence (Proposed Condition)", kind: "divider", placeholder: "Add 1-5 references (sold/active) supporting the subject's after completion value for the proposed plan." },
+    {
+      id: "proposedValueComps",
+      label: "After Completion Comparable References",
+      kind: "repeater",
+      maxItems: 5,
+      addButtonLabel: "Add Comp",
+      fields: comparableEvidenceFields
+    },
     { id: "estimatedAfterValue", label: "Estimated After Completion Value ($)", kind: "number", placeholder: "375000" },
     { id: "marketSourcesProposed", label: "Data Sources / Notes", kind: "text", placeholder: "Bright MLS, public records, builder bid letters, etc." },
-    { id: "estimatedAfterJustification", label: "Justification Summary", kind: "textarea", placeholder: "Explain how sources/market data support your after-completion value." },
+    { id: "estimatedAfterJustification", label: "Justification Summary", kind: "textarea", placeholder: "Briefly explain how these comps support your after-completion value, including PPSF, quality level, age/renovation, location, time, and relevant adjustments." },
 
     { id: "feasibilityDivider", label: "Feasibility Inputs", kind: "divider", placeholder: "Enter current and after-completion values to model ROI and project contribution." },
     { id: "valueCurrent", label: "Current Lot Value ($)", kind: "number", placeholder: "0.00" },
     { id: "valueAfterRepair", label: "After Completion Value ($)", kind: "number", placeholder: "0.00" },
-    { id: "roi", label: "Estimated ROI", kind: "text", placeholder: "0.00%" },
-    { id: "grossValueGain", label: "Gross Value Gain", kind: "number", placeholder: "0.00" },
-    { id: "netProjectProfit", label: "Net Project Profit", kind: "number", placeholder: "0.00" }
+    { id: "roi", label: "Estimated ROI", kind: "text", placeholder: "0.00%", readOnly: true },
+    { id: "grossValueGain", label: "Gross Value Gain", kind: "text", placeholder: "$0.00", readOnly: true },
+    { id: "netProjectProfit", label: "Net Project Profit", kind: "text", placeholder: "$0.00", readOnly: true }
   ]
 };

@@ -75,20 +75,45 @@ function getPropertyFieldPrefill(field: FormField, property?: PropertyRecord) {
     subjectAddress: property?.address ?? "",
     propertyAddress: property?.address ?? "",
     address: property?.address ?? "",
+    soldSubjectAddress: property?.address ?? "",
+    arvSubjectAddress: property?.address ?? "",
+    costSubjectAddress: property?.address ?? "",
+    grmSubjectAddress: property?.address ?? "",
     subjectUnit: property?.unit ?? "",
     propertyUnit: property?.unit ?? "",
     unit: property?.unit ?? "",
+    costSubjectUnit: property?.unit ?? "",
     subjectCity: property?.city ?? "",
     propertyCity: property?.city ?? "",
     city: property?.city ?? "",
+    soldSubjectCity: property?.city ?? "",
+    arvSubjectCity: property?.city ?? "",
+    costSubjectCity: property?.city ?? "",
     subjectState: property?.state ?? "",
     propertyState: property?.state ?? "",
     state: property?.state ?? "",
+    soldSubjectState: property?.state ?? "",
+    arvSubjectState: property?.state ?? "",
+    costSubjectState: property?.state ?? "",
     subjectZip: property?.zip ?? "",
     propertyZip: property?.zip ?? "",
     zip: property?.zip ?? "",
+    zipCode: property?.zip ?? "",
+    soldSubjectZip: property?.zip ?? "",
+    arvSubjectZip: property?.zip ?? "",
+    costSubjectZip: property?.zip ?? "",
     parcelId: property?.parcelId ?? "",
-    propertyType: property?.propertyType ?? ""
+    propertyType: property?.propertyType ?? "",
+    subjectMapId: "S",
+    activeComp1MapId: "1",
+    activeComp2MapId: "2",
+    activeComp3MapId: "3",
+    soldComp1MapId: "4",
+    soldComp2MapId: "5",
+    soldComp3MapId: "6",
+    arvComp1MapId: "7",
+    arvComp2MapId: "8",
+    arvComp3MapId: "9"
   };
 
   return defaults[field.id] ?? "";
@@ -176,7 +201,7 @@ export default async function LocalReportFormPage({
           <input type="hidden" name="projectId" value={project.id} />
           <input type="hidden" name="formId" value={formId} />
           <div className="border-b border-slate-200 pb-4">
-            <h2 className="text-xl font-bold text-slate-950">Form details</h2>
+            <h2 className="text-xl font-bold text-blue-700">Form details</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Complete this form locally. You can save it to the report package or save and immediately download a PDF.
             </p>
@@ -198,7 +223,7 @@ export default async function LocalReportFormPage({
 
         <aside className="space-y-4">
           <div className="card p-5">
-            <h2 className="font-bold text-slate-950">Shared report data</h2>
+            <h2 className="font-bold text-blue-700">Shared report data</h2>
             <dl className="mt-4 space-y-3 text-sm">
               <div>
                 <dt className="font-semibold text-slate-500">Client</dt>

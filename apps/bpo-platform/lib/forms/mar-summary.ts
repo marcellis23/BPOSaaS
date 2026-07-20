@@ -3,7 +3,7 @@ import { stateOptions } from "./cover-page";
 
 export const marSummaryForm: LocalFormDefinition = {
   id: "mar-summary",
-  title: "MAR Summary & Conclusion",
+  title: "Market Analysis Summary Report",
   category: "Market Analysis Report (MAR)",
   description: "Market overview summary, primary market connection, submarket tiers, listing history, and optional after-repair condition assessment.",
   fields: [
@@ -95,7 +95,17 @@ export const marSummaryForm: LocalFormDefinition = {
     },
     { id: "arv_subject_summary", label: "Summary of the Subject Property (After Repair Condition)", kind: "textarea", placeholder: "Describe property traits after improvements...", fullWidth: true, visibleWhen: { fieldId: "arv_active", values: ["Yes"] } },
     { id: "arv_position_primary", label: "Subject Property’s Position in the Primary Market (After Repair)", kind: "textarea", placeholder: "Describe market position post-repairs...", fullWidth: true, visibleWhen: { fieldId: "arv_active", values: ["Yes"] } },
-    { id: "arv_new_submarket_summary", label: "Summary of the New Submarket (Required if Submarket Changes)", kind: "textarea", placeholder: "Describe the new competitive set segment...", fullWidth: true, visibleWhen: { fieldId: "arv_change_submarket", values: ["Yes"] } },
+    {
+      id: "arv_new_submarket_summary",
+      label: "Summary of the New Submarket (Required if Submarket Changes)",
+      kind: "textarea",
+      placeholder: "Describe the new competitive set segment...",
+      fullWidth: true,
+      visibleWhenAll: [
+        { fieldId: "arv_active", values: ["Yes"] },
+        { fieldId: "arv_change_submarket", values: ["Yes"] }
+      ]
+    },
     {
       id: "arv_position_tier",
       label: "Subject Property Position in Submarket (ARV)",
